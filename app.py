@@ -7,9 +7,8 @@ from langchain_openai import ChatOpenAI
 from langchain_google_genai import ChatGoogleGenerativeAI
 from crewai import Agent, Task, Crew
 from crewai_tools import PDFSearchTool
-from PyPDF2 import PdfFileReader
 
-def generate_text(llm, question,pdf_file):
+def generate_text(llm, question, pdf_file):
     inputs = {'question': question}
 
     rag_tool = PDFSearchTool(
@@ -20,8 +19,6 @@ def generate_text(llm, question,pdf_file):
                 config=dict(
                     model="gemini-1.5-flash",
                     temperature=0.6,
-                    # top_p=1,
-                    # stream=true,
                 ),
             ),
             embedder=dict(
@@ -34,8 +31,6 @@ def generate_text(llm, question,pdf_file):
             ),
         )
     )
-    
-    
 
     writer_agent = Agent(
         role='Research Specialist',
@@ -85,35 +80,21 @@ def main():
 
     if api_key and submitted:
         if model == 'OpenAI':
-            async def setup_OpenAI():
-                loop = asyncio.get_event_loop()
-                if loop is None:
-                    loop = asyncio.new_event_loop()
-                    asyncio.set_event_loop(loop)
-
+            async def setup_openai():
                 os.environ["OPENAI_API_KEY"] = api_key
-                llm = ChatOpenAI(temperature=0.6, max_tokens=2000)
-                print("OpenAI Configured")
-                return llm
+                return ChatOpenAI(temperature=0.6, max_tokens=2000)
 
-            llm = asyncio.run(setup_OpenAI())
+            llm = asyncio.run(setup_openai())
             mod = 'OpenAI'
 
         elif model == 'Gemini':
             async def setup_gemini():
-                loop = asyncio.get_event_loop()
-                if loop is None:
-                    loop = asyncio.new_event_loop()
-                    asyncio.set_event_loop(loop)
-
-                llm = ChatGoogleGenerativeAI(
+                return ChatGoogleGenerativeAI(
                     model="gemini-1.5-flash",
                     verbose=True,
                     temperature=0.6,
                     google_api_key=api_key
                 )
-                print("Gemini Configured")
-                return llm
 
             llm = asyncio.run(setup_gemini())
             mod = 'Gemini'
@@ -121,31 +102,30 @@ def main():
         pdf_file = st.file_uploader("Upload your PDF file", type=["pdf"])
 
         if pdf_file is not None:
-            
             question = st.text_input("Enter your question:")
 
             if st.button("Generate Answer"):
                 with st.spinner("Generating Answer..."):
-                    
-                    generated_content = generate_text(llm, question, pdf_file)
-                    print("Content generated")
-
-                    st.markdown(generated_content)
-
-                    doc = Document()
-                    doc.add_heading(question)
-                    doc.add_paragraph(generated_content)
-
-                    buffer = BytesIO()
-                    doc.save(buffer)
-                    buffer.seek(0)
-                    
-                    st.download_button(
+                    try:
+                        generated_content = generate_text(llm, question, pdf_file)
+                        st.markdown(generated_content)
+                        
+                        doc = Document()
+                        doc.add_heading(question, level=1)
+                        doc.add_paragraph(generated_content)
+                        
+                        buffer = BytesIO()
+                        doc.save(buffer)
+                        buffer.seek(0)
+                        
+                        st.download_button(
                             label="Download as Word Document",
                             data=buffer,
                             file_name=f"{question}.docx",
                             mime="application/vnd.openxmlformats-officedocument.wordprocessingml.document"
                         )
+                    except Exception as e:
+                        st.error(f"Error: {e}")
 
 if __name__ == "__main__":
     main()
