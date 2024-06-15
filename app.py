@@ -68,13 +68,12 @@ def generate_text(llm, question, pdf_bytes):
     )
 
     result = crew.kickoff(inputs=inputs)
-
     return result
 
 def main():
     st.header('RAG Content Generator')
     mod = None
-    global serp_api_key
+
     with st.sidebar:
         with st.form('Gemini/OpenAI'):
             model = st.radio('Choose Your LLM', ('Gemini', 'OpenAI'))
@@ -124,8 +123,9 @@ def main():
             if st.button("Generate Answer"):
                 with st.spinner("Generating Answer..."):
                     pdf_bytes = pdf_file.read()
+                    print("PDF uploaded and read")
                     generated_content = generate_text(llm, question, pdf_bytes)
-
+                    print("Content generated")
                     st.markdown(generated_content)
 
                     doc = Document()
