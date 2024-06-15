@@ -18,11 +18,9 @@ def save_pdf_file(uploaded_file, save_folder):
     
     return save_path
 
-def generate_text(llm1, question, saved_path):
-    inputs = {'question': question}
-
+def tool(path):
     rag_tool = PDFSearchTool(
-        pdf=saved_path, #path required.
+        pdf=path, #path required.
         config=dict(
             llm=dict(
                 provider="google",  # or google, openai, anthropic, llama2, ...
@@ -41,6 +39,13 @@ def generate_text(llm1, question, saved_path):
             ),
         )
     )
+    return rag_tool
+
+
+def generate_text(llm, question, rag_tool):
+    inputs = {'question': question}
+
+    
     
     writer_agent = Agent(
         role='Research Specialist',
@@ -54,7 +59,7 @@ def generate_text(llm1, question, saved_path):
         ''',
         verbose=True,
         allow_delegation=False,
-        llm=llm1
+        llm=llm
     )
 
     task_writer = Task(
@@ -120,14 +125,15 @@ def main():
         save_folder = 'Saved Files'
         saved_path = save_pdf_file(uploaded_file, save_folder)
         
-        st.write(saved_path)
+        rag_tool = tool(saved_path)
         
         question = st.text_input("Enter your question:")
         
 
         if st.button("Generate Answer"):
             with st.spinner("Generating Answer..."):
-                generated_content = generate_text(llm, question, saved_path)
+                
+                generated_content = generate_text(llm, question,rag_tool)
 
                 st.markdown(generated_content)
 
