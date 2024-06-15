@@ -119,10 +119,10 @@ def main():
             mod = 'Gemini'
 
         pdf_file = st.file_uploader("Upload your PDF file", type=["pdf"])
-        print(st.write("Helo bug"))
 
         if pdf_file is not None:
-            
+            print(st.write("Helo bug"))
+
             question = st.text_input("Enter your question:")
 
             if st.button("Generate Answer"):
