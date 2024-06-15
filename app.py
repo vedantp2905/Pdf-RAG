@@ -119,8 +119,8 @@ def main():
             mod = 'Gemini'
 
         pdf_file = st.file_uploader("Upload your PDF file", type=["pdf"])
-        print(pdf_file)
-        if pdf_file is not None:
+        
+        if pdf_file:
             print(st.write("Helo bug"))
 
             question = st.text_input("Enter your question:")
