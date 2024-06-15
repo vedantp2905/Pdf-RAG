@@ -98,6 +98,11 @@ def main():
     if api_key and submitted:
         if model == 'OpenAI':
             async def setup_OpenAI():
+                loop = asyncio.get_event_loop()
+                if loop is None:
+                    loop = asyncio.new_event_loop()
+                    asyncio.set_event_loop(loop)
+
                 os.environ["OPENAI_API_KEY"] = api_key
                 llm = ChatOpenAI(temperature=0.6, max_tokens=2000)
                 print("OpenAI Configured")
@@ -108,7 +113,11 @@ def main():
 
         elif model == 'Gemini':
             async def setup_gemini():
-                
+                loop = asyncio.get_event_loop()
+                if loop is None:
+                    loop = asyncio.new_event_loop()
+                    asyncio.set_event_loop(loop)
+
                 llm = ChatGoogleGenerativeAI(
                     model="gemini-1.5-flash",
                     verbose=True,
