@@ -22,11 +22,12 @@ def tool(path):
     rag_tool = PDFSearchTool(
         pdf=path, #path required.
         config=dict(
+            
             llm=dict(
                 provider="google",  # or google, openai, anthropic, llama2, ...
                 config=dict(
                     model="gemini-1.5-flash",
-                    temperature=0.6,
+                    temperature=0.6
                 ),
             ),
             embedder=dict(
@@ -35,6 +36,7 @@ def tool(path):
                     model="models/embedding-001",
                     task_type="retrieval_document",
                     title="Embeddings for PDF",
+                    
                 ),
             ),
         )
@@ -105,7 +107,9 @@ def main():
             mod = 'OpenAI'
 
         elif model == 'Gemini':
+            os.environ["GOOGLE_API_KEY"] = api_key
             async def setup_gemini():
+                
                 llm = ChatGoogleGenerativeAI(
                     model="gemini-1.5-flash",
                     verbose=True,
