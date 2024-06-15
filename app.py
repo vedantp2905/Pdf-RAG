@@ -9,21 +9,11 @@ from crewai import Agent, Task, Crew
 from crewai_tools import PDFSearchTool
 from PyPDF2 import PdfFileReader
 
-def extract_text_from_pdf(pdf_bytes):
-    try:
-        pdf_reader = PdfFileReader(BytesIO(pdf_bytes))
-        pdf_text = ""
-        for page in range(pdf_reader.numPages):
-            pdf_text += pdf_reader.getPage(page).extract_text()
-        return pdf_text
-    except Exception as e:
-        print(f"Error reading PDF: {e}")
-        return ""
-
-def generate_text(llm, question, pdf_text):
-    inputs = {'question': question, 'pdf_text': pdf_text}
+def generate_text(llm, question,pdf_file):
+    inputs = {'question': question}
 
     rag_tool = PDFSearchTool(
+        pdf=pdf_file,
         config=dict(
             llm=dict(
                 provider="google",  # or google, openai, anthropic, llama2, ...
@@ -44,6 +34,8 @@ def generate_text(llm, question, pdf_text):
             ),
         )
     )
+    
+    
 
     writer_agent = Agent(
         role='Research Specialist',
@@ -129,37 +121,31 @@ def main():
         pdf_file = st.file_uploader("Upload your PDF file", type=["pdf"])
 
         if pdf_file is not None:
+            
             question = st.text_input("Enter your question:")
 
             if st.button("Generate Answer"):
                 with st.spinner("Generating Answer..."):
-                    pdf_bytes = pdf_file.read()
-                    print("PDF uploaded and read")
-                    pdf_text = extract_text_from_pdf(pdf_bytes)
-                    print(f"Extracted PDF text (first 500 chars): {pdf_text[:500]}")
+                    
+                    generated_content = generate_text(llm, question, pdf_file)
+                    print("Content generated")
 
-                    if pdf_text.strip():
-                        generated_content = generate_text(llm, question, pdf_text)
-                        print("Content generated")
+                    st.markdown(generated_content)
 
-                        st.markdown(generated_content)
+                    doc = Document()
+                    doc.add_heading(question)
+                    doc.add_paragraph(generated_content)
 
-                        doc = Document()
-                        doc.add_heading(question)
-                        doc.add_paragraph(generated_content)
-
-                        buffer = BytesIO()
-                        doc.save(buffer)
-                        buffer.seek(0)
-
-                        st.download_button(
+                    buffer = BytesIO()
+                    doc.save(buffer)
+                    buffer.seek(0)
+                    
+                    st.download_button(
                             label="Download as Word Document",
                             data=buffer,
                             file_name=f"{question}.docx",
                             mime="application/vnd.openxmlformats-officedocument.wordprocessingml.document"
                         )
-                    else:
-                        st.error("Failed to extract text from the PDF. Please ensure the PDF contains selectable text.")
 
 if __name__ == "__main__":
     main()
