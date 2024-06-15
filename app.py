@@ -121,8 +121,11 @@ def main():
         
         save_folder = 'Saved Files'
         saved_path = save_pdf_file(uploaded_file, save_folder)
-
+        
+        st.write(saved_path)
+        
         question = st.text_input("Enter your question:")
+        
 
         if st.button("Generate Answer"):
             with st.spinner("Generating Answer..."):
