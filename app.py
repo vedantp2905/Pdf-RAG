@@ -9,29 +9,11 @@ from crewai import Agent, Task, Crew
 from crewai_tools import PDFSearchTool
 from PyPDF2 import PdfFileReader
 
-def read_pdf(file):
-    text_final = ""
-    try:
-        # Use PyPDF2 to read the PDF file
-        pdf_reader = PdfFileReader(file)
-        num_pages = pdf_reader.numPages
-        st.write(f"The PDF file has {num_pages} pages.")
-       
-        for page_num in range(num_pages):
-            page = pdf_reader.getPage(page_num)
-            text = page.extractText()
-            text_final += text + "\n"  # Add a newline between pages
-        return text_final
-    
-    except Exception as e:
-        st.error(f"Error reading PDF file: {e}")
-
-
-def generate_text(llm, question, text_final):
+def generate_text(llm, question, uploaded_file):
     inputs = {'question': question}
 
     rag_tool = PDFSearchTool(
-        pdf=text_final,
+        pdf=uploaded_file,
         config=dict(
             llm=dict(
                 provider="google",  # or google, openai, anthropic, llama2, ...
@@ -126,26 +108,24 @@ def main():
    
         if uploaded_file is not None:
             st.write("Uploaded!")
-            text_final = read_pdf(uploaded_file)   
+            
+            question = st.text_input("Enter your question:")
 
-            if text_final is not None:
-                question = st.text_input("Enter your question:")
+            if st.button("Generate Answer"):
+                with st.spinner("Generating Answer..."):
+                    generated_content = generate_text(llm, question, uploaded_file)
 
-                if st.button("Generate Answer"):
-                    with st.spinner("Generating Answer..."):
-                        generated_content = generate_text(llm, question, text_final)
+                    st.markdown(generated_content)
 
-                        st.markdown(generated_content)
+                    doc = Document()
+                    doc.add_heading(question, level=1)  # Specify the heading level
+                    doc.add_paragraph(generated_content)
 
-                        doc = Document()
-                        doc.add_heading(question, level=1)  # Specify the heading level
-                        doc.add_paragraph(generated_content)
-
-                        buffer = BytesIO()
-                        doc.save(buffer)
-                        buffer.seek(0)
-
-                        st.download_button(
+                    buffer = BytesIO()
+                    doc.save(buffer)
+                    buffer.seek(0)
+                    
+                    st.download_button(
                             label="Download as Word Document",
                             data=buffer,
                             file_name=f"{question}.docx",
