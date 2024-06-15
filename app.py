@@ -127,24 +127,25 @@ def main():
         if uploaded_file is not None:
             st.write("Uploaded!")
             text_final = read_pdf(uploaded_file)   
-            
-            question = st.text_input("Enter your question:")
 
-            if st.button("Generate Answer"):
-                with st.spinner("Generating Answer..."):
-                    generated_content = generate_text(llm, question, text_final)
+            if text_final is not None:
+                question = st.text_input("Enter your question:")
 
-                    st.markdown(generated_content)
+                if st.button("Generate Answer"):
+                    with st.spinner("Generating Answer..."):
+                        generated_content = generate_text(llm, question, text_final)
 
-                    doc = Document()
-                    doc.add_heading(question, level=1)  # Specify the heading level
-                    doc.add_paragraph(generated_content)
+                        st.markdown(generated_content)
 
-                    buffer = BytesIO()
-                    doc.save(buffer)
-                    buffer.seek(0)
-                    
-                    st.download_button(
+                        doc = Document()
+                        doc.add_heading(question, level=1)  # Specify the heading level
+                        doc.add_paragraph(generated_content)
+
+                        buffer = BytesIO()
+                        doc.save(buffer)
+                        buffer.seek(0)
+
+                        st.download_button(
                             label="Download as Word Document",
                             data=buffer,
                             file_name=f"{question}.docx",
