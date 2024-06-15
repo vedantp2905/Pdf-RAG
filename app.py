@@ -115,35 +115,35 @@ def main():
             llm = asyncio.run(setup_gemini())
             mod = 'Gemini'
 
-        uploaded_file = st.file_uploader("Choose a PDF file", type='pdf')
-   
-        if uploaded_file is not None:
-            
-            save_folder = 'Saved Files'
-            saved_path = save_pdf_file(uploaded_file, save_folder)
+    uploaded_file = st.file_uploader("Choose a PDF file", type='pdf')
 
-            question = st.text_input("Enter your question:")
+    if uploaded_file is not None:
+        
+        save_folder = 'Saved Files'
+        saved_path = save_pdf_file(uploaded_file, save_folder)
 
-            if st.button("Generate Answer"):
-                with st.spinner("Generating Answer..."):
-                    generated_content = generate_text(llm, question, saved_path)
+        question = st.text_input("Enter your question:")
 
-                    st.markdown(generated_content)
+        if st.button("Generate Answer"):
+            with st.spinner("Generating Answer..."):
+                generated_content = generate_text(llm, question, saved_path)
 
-                    doc = Document()
-                    doc.add_heading(question, level=1)  # Specify the heading level
-                    doc.add_paragraph(generated_content)
+                st.markdown(generated_content)
 
-                    buffer = BytesIO()
-                    doc.save(buffer)
-                    buffer.seek(0)
-                    
-                    st.download_button(
-                            label="Download as Word Document",
-                            data=buffer,
-                            file_name=f"{question}.docx",
-                            mime="application/vnd.openxmlformats-officedocument.wordprocessingml.document"
-                        )
+                doc = Document()
+                doc.add_heading(question, level=1)  # Specify the heading level
+                doc.add_paragraph(generated_content)
+
+                buffer = BytesIO()
+                doc.save(buffer)
+                buffer.seek(0)
+                
+                st.download_button(
+                        label="Download as Word Document",
+                        data=buffer,
+                        file_name=f"{question}.docx",
+                        mime="application/vnd.openxmlformats-officedocument.wordprocessingml.document"
+                    )
 
 if __name__ == "__main__":
     main()
