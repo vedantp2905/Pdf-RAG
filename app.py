@@ -9,11 +9,22 @@ from crewai import Agent, Task, Crew
 from crewai_tools import PDFSearchTool
 from PyPDF2 import PdfFileReader
 
-def generate_text(llm, question, uploaded_file):
+
+def save_pdf_file(uploaded_file, save_folder):
+    if not os.path.exists(save_folder):
+        os.makedirs(save_folder)
+    
+    save_path = os.path.join(save_folder, uploaded_file.name)
+    with open(save_path, 'wb') as f:
+        f.write(uploaded_file.getbuffer())
+    
+    return save_path
+
+def generate_text(llm, question, saved_path):
     inputs = {'question': question}
 
     rag_tool = PDFSearchTool(
-        pdf=uploaded_file,
+        pdf=saved_path, #path required.
         config=dict(
             llm=dict(
                 provider="google",  # or google, openai, anthropic, llama2, ...
@@ -104,16 +115,18 @@ def main():
             llm = asyncio.run(setup_gemini())
             mod = 'Gemini'
 
-        uploaded_file = st.file_uploader("Choose a PDF file", type="pdf")
+        uploaded_file = st.file_uploader("Choose a PDF file", type='pdf')
    
         if uploaded_file is not None:
-            st.write("Uploaded!")
             
+            save_folder = 'Saved Files'
+            saved_path = save_pdf_file(uploaded_file, save_folder)
+
             question = st.text_input("Enter your question:")
 
             if st.button("Generate Answer"):
                 with st.spinner("Generating Answer..."):
-                    generated_content = generate_text(llm, question, uploaded_file)
+                    generated_content = generate_text(llm, question, saved_path)
 
                     st.markdown(generated_content)
 
