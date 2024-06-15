@@ -7,8 +7,6 @@ from langchain_openai import ChatOpenAI
 from langchain_google_genai import ChatGoogleGenerativeAI
 from crewai import Agent, Task, Crew
 from crewai_tools import PDFSearchTool
-from PyPDF2 import PdfFileReader
-
 
 def save_pdf_file(uploaded_file, save_folder):
     if not os.path.exists(save_folder):
@@ -20,7 +18,7 @@ def save_pdf_file(uploaded_file, save_folder):
     
     return save_path
 
-def generate_text(llm, question, saved_path):
+def generate_text(llm1, question, saved_path):
     inputs = {'question': question}
 
     rag_tool = PDFSearchTool(
@@ -38,7 +36,7 @@ def generate_text(llm, question, saved_path):
                 config=dict(
                     model="models/embedding-001",
                     task_type="retrieval_document",
-                    title="Embeddings",
+                    title="Embeddings for PDF",
                 ),
             ),
         )
@@ -56,7 +54,7 @@ def generate_text(llm, question, saved_path):
         ''',
         verbose=True,
         allow_delegation=False,
-        llm=llm
+        llm=llm1
     )
 
     task_writer = Task(
