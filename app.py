@@ -125,6 +125,7 @@ def main():
         uploaded_file = st.file_uploader("Choose a PDF file", type="pdf")
    
         if uploaded_file is not None:
+            st.write("Uploaded!")
             text_final = read_pdf(uploaded_file)   
             
             question = st.text_input("Enter your question:")
