@@ -9,19 +9,35 @@ from crewai import Agent, Task, Crew
 from crewai_tools import PDFSearchTool
 from PyPDF2 import PdfFileReader
 
-def generate_text(llm, question,pdf_file):
+def read_pdf(file):
+    text_final = ""
+    try:
+        # Use PyPDF2 to read the PDF file
+        pdf_reader = PdfFileReader(file)
+        num_pages = pdf_reader.numPages
+        st.write(f"The PDF file has {num_pages} pages.")
+       
+        for page_num in range(num_pages):
+            page = pdf_reader.getPage(page_num)
+            text = page.extractText()
+            text_final += text + "\n"  # Add a newline between pages
+        return text_final
+    
+    except Exception as e:
+        st.error(f"Error reading PDF file: {e}")
+
+
+def generate_text(llm, question, text_final):
     inputs = {'question': question}
 
     rag_tool = PDFSearchTool(
-        pdf=pdf_file,
+        pdf=text_final,
         config=dict(
             llm=dict(
                 provider="google",  # or google, openai, anthropic, llama2, ...
                 config=dict(
                     model="gemini-1.5-flash",
                     temperature=0.6,
-                    # top_p=1,
-                    # stream=true,
                 ),
             ),
             embedder=dict(
@@ -35,8 +51,6 @@ def generate_text(llm, question,pdf_file):
         )
     )
     
-    
-
     writer_agent = Agent(
         role='Research Specialist',
         goal='To accurately and efficiently retrieve and synthesize information from PDFs to answer user questions.',
@@ -86,11 +100,6 @@ def main():
     if api_key and submitted:
         if model == 'OpenAI':
             async def setup_OpenAI():
-                loop = asyncio.get_event_loop()
-                if loop is None:
-                    loop = asyncio.new_event_loop()
-                    asyncio.set_event_loop(loop)
-
                 os.environ["OPENAI_API_KEY"] = api_key
                 llm = ChatOpenAI(temperature=0.6, max_tokens=2000)
                 print("OpenAI Configured")
@@ -101,11 +110,6 @@ def main():
 
         elif model == 'Gemini':
             async def setup_gemini():
-                loop = asyncio.get_event_loop()
-                if loop is None:
-                    loop = asyncio.new_event_loop()
-                    asyncio.set_event_loop(loop)
-
                 llm = ChatGoogleGenerativeAI(
                     model="gemini-1.5-flash",
                     verbose=True,
@@ -118,22 +122,21 @@ def main():
             llm = asyncio.run(setup_gemini())
             mod = 'Gemini'
 
-        pdf_file = st.file_uploader("Upload your PDF file", type=["pdf"])
-        
-        if pdf_file:
-            print(st.write("Helo bug"))
-
+        uploaded_file = st.file_uploader("Choose a PDF file", type="pdf")
+   
+        if uploaded_file is not None:
+            text_final = read_pdf(uploaded_file)   
+            
             question = st.text_input("Enter your question:")
 
             if st.button("Generate Answer"):
                 with st.spinner("Generating Answer..."):
-                    
-                    generated_content = generate_text(llm, question, pdf_file)
+                    generated_content = generate_text(llm, question, text_final)
 
                     st.markdown(generated_content)
 
                     doc = Document()
-                    doc.add_heading(question)
+                    doc.add_heading(question, level=1)  # Specify the heading level
                     doc.add_paragraph(generated_content)
 
                     buffer = BytesIO()
