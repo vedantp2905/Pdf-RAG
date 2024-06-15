@@ -107,7 +107,6 @@ def main():
             mod = 'OpenAI'
 
         elif model == 'Gemini':
-            os.environ["GOOGLE_API_KEY"] = api_key
             async def setup_gemini():
                 
                 llm = ChatGoogleGenerativeAI(
