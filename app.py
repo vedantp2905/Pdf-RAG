@@ -119,7 +119,7 @@ def main():
             mod = 'Gemini'
 
         pdf_file = st.file_uploader("Upload your PDF file", type=["pdf"])
-
+        print(pdf_file)
         if pdf_file is not None:
             print(st.write("Helo bug"))
 
