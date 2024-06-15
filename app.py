@@ -117,30 +117,29 @@ def main():
             mod = 'Gemini'
 
         pdf_file = st.file_uploader("Upload your PDF file", type=["pdf"])
+        pdf_bytes = pdf_file.read()
 
-        if pdf_file is not None:
-            question = st.text_input("Enter your question:")
+        question = st.text_input("Enter your question:")
 
-            if st.button("Generate Answer"):
-                with st.spinner("Generating Answer..."):
-                    pdf_bytes = pdf_file.read()
-                    generated_content = generate_text(llm, question, pdf_bytes)
+        if st.button("Generate Answer"):
+            with st.spinner("Generating Answer..."):
+                generated_content = generate_text(llm, question, pdf_bytes)
 
-                    st.markdown(generated_content)
+                st.markdown(generated_content)
 
-                    doc = Document()
-                    doc.add_heading(question)
-                    doc.add_paragraph(generated_content)
+                doc = Document()
+                doc.add_heading(question)
+                doc.add_paragraph(generated_content)
 
-                    buffer = BytesIO()
-                    doc.save(buffer)
-                    buffer.seek(0)
+                buffer = BytesIO()
+                doc.save(buffer)
+                buffer.seek(0)
 
-                    st.download_button(
-                        label="Download as Word Document",
-                        data=buffer,
-                        file_name=f"{question}.docx",
-                        mime="application/vnd.openxmlformats-officedocument.wordprocessingml.document"
+                st.download_button(
+                    label="Download as Word Document",
+                    data=buffer,
+                    file_name=f"{question}.docx",
+                    mime="application/vnd.openxmlformats-officedocument.wordprocessingml.document"
                     )
 
 if __name__ == "__main__":
