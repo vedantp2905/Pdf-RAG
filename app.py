@@ -10,11 +10,15 @@ from crewai_tools import PDFSearchTool
 from PyPDF2 import PdfFileReader
 
 def extract_text_from_pdf(pdf_bytes):
-    pdf_reader = PdfFileReader(BytesIO(pdf_bytes))
-    pdf_text = ""
-    for page in range(pdf_reader.numPages):
-        pdf_text += pdf_reader.getPage(page).extract_text()
-    return pdf_text
+    try:
+        pdf_reader = PdfFileReader(BytesIO(pdf_bytes))
+        pdf_text = ""
+        for page in range(pdf_reader.numPages):
+            pdf_text += pdf_reader.getPage(page).extract_text()
+        return pdf_text
+    except Exception as e:
+        print(f"Error reading PDF: {e}")
+        return ""
 
 def generate_text(llm, question, pdf_text):
     inputs = {'question': question, 'pdf_text': pdf_text}
@@ -130,31 +134,6 @@ def main():
             if st.button("Generate Answer"):
                 with st.spinner("Generating Answer..."):
                     pdf_bytes = pdf_file.read()
+                    print("PDF uploaded and read")
                     pdf_text = extract_text_from_pdf(pdf_bytes)
-                    print("PDF uploaded and read. Extracted text:", pdf_text[:500])  # Print first 500 characters for debugging
-
-                    if pdf_text.strip():
-                        generated_content = generate_text(llm, question, pdf_text)
-                        print("Content generated")
-
-                        st.markdown(generated_content)
-
-                        doc = Document()
-                        doc.add_heading(question)
-                        doc.add_paragraph(generated_content)
-
-                        buffer = BytesIO()
-                        doc.save(buffer)
-                        buffer.seek(0)
-
-                        st.download_button(
-                            label="Download as Word Document",
-                            data=buffer,
-                            file_name=f"{question}.docx",
-                            mime="application/vnd.openxmlformats-officedocument.wordprocessingml.document"
-                        )
-                    else:
-                        st.error("Failed to extract text from the PDF. Please ensure the PDF contains selectable text.")
-
-if __name__ == "__main__":
-    main()
+                    print(f"Extracted PDF text (first 5
