@@ -1,7 +1,7 @@
 import os
 import asyncio
-from io import BytesIO
 import streamlit as st
+from io import BytesIO
 from docx import Document
 from langchain_openai import ChatOpenAI
 from langchain_google_genai import ChatGoogleGenerativeAI
@@ -20,34 +20,29 @@ def save_pdf_file(uploaded_file, save_folder):
 
 def tool(path):
     rag_tool = PDFSearchTool(
-        pdf=path, #path required.
+        pdf=path,
         config=dict(
-            
             llm=dict(
-                provider="google",  # or google, openai, anthropic, llama2, ...
+                provider="google",
                 config=dict(
                     model="gemini-1.5-flash",
-                    temperature=0.6
+                    temperature=0.6,
                 ),
             ),
             embedder=dict(
-                provider="google",  # or openai, ollama, ...
+                provider="google",
                 config=dict(
                     model="models/embedding-001",
                     task_type="retrieval_document",
                     title="Embeddings for PDF",
-                    
                 ),
             ),
-        )
+        ),
     )
     return rag_tool
 
-
 def generate_text(llm, question, rag_tool):
     inputs = {'question': question}
-
-    
     
     writer_agent = Agent(
         role='Research Specialist',
@@ -69,9 +64,9 @@ def generate_text(llm, question, rag_tool):
                      The task involves analyzing user queries, retrieving relevant information from the PDFs, and generating clear, concise, and accurate responses.'''),
         agent=writer_agent,
         expected_output="""
+        - Clear and concise synthesis of the retrieved information, formatted in a user-friendly manner.
         - A detailed and well-sourced answer to the user's question.
         - References to specific sections or pages in the PDFs where the information was found.
-        - Clear and concise synthesis of the retrieved information, formatted in a user-friendly manner.
         """,
         tools=[rag_tool]
     )
@@ -88,12 +83,11 @@ def generate_text(llm, question, rag_tool):
 def main():
     global llm
     st.header('RAG Content Generator')
-    mod = None
 
     with st.sidebar:
         with st.form('Gemini/OpenAI'):
             model = st.radio('Choose Your LLM', ('Gemini', 'OpenAI'))
-            api_key = st.text_input(f'Enter your API key', type="password")
+            api_key = st.text_input('Enter your API key', type="password")
             submitted = st.form_submit_button("Submit")
 
     if api_key:
@@ -103,8 +97,9 @@ def main():
                 if loop is None:
                     loop = asyncio.new_event_loop()
                     asyncio.set_event_loop(loop)
-
-                llm = ChatOpenAI(temperature=0.6, max_tokens=2000,api_key=api_key)
+                    
+                os.environ["OPENAI_API_KEY"] = api_key
+                llm = ChatOpenAI(temperature=0.6, max_tokens=2000, api_key=api_key)
                 print("OpenAI Configured")
                 return llm
 
@@ -133,24 +128,21 @@ def main():
     uploaded_file = st.file_uploader("Choose a PDF file", type='pdf')
 
     if uploaded_file is not None:
-        
         save_folder = 'Saved Files'
         saved_path = save_pdf_file(uploaded_file, save_folder)
+        
         
         rag_tool = tool(saved_path)
         
         question = st.text_input("Enter your question:")
         
-
         if st.button("Generate Answer"):
             with st.spinner("Generating Answer..."):
-                
-                generated_content = generate_text(llm, question,rag_tool)
-
+                generated_content = generate_text(llm, question, rag_tool)
                 st.markdown(generated_content)
 
                 doc = Document()
-                doc.add_heading(question, level=1)  # Specify the heading level
+                doc.add_heading(question, level=1)
                 doc.add_paragraph(generated_content)
 
                 buffer = BytesIO()
