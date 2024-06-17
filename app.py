@@ -88,6 +88,7 @@ def generate_text(llm, question, rag_tool):
 def main():
     global llm
     global mod
+    mod = None  # Initialize mod here
     
     st.header('RAG Content Generator')
 
@@ -104,8 +105,7 @@ def main():
                     os.environ["OPENAI_API_KEY"] = api_key
                     llm = ChatOpenAI(temperature=0.6, max_tokens=2000)
                     print("OpenAI Configured")
-                    global mod
-                    mod = "OpenAI"
+                    mod = "OpenAI"  # Update mod here
                     return llm
 
                 llm = asyncio.run(setup_OpenAI())
@@ -120,8 +120,7 @@ def main():
                         google_api_key=api_key
                     )
                     print("Gemini Configured")
-                    global mod
-                    mod = "Gemini"
+                    mod = "Gemini"  # Update mod here
                     return llm
 
                 llm = asyncio.run(setup_gemini())
