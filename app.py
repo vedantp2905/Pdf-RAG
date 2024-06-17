@@ -87,7 +87,6 @@ def generate_text(llm, question, rag_tool):
 
 def main():
    
-    llm = None
     st.header('RAG Content Generator')
     mod = None
 
