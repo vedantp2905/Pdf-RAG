@@ -127,7 +127,6 @@ def main():
 
             llm = asyncio.run(setup_gemini())
         
-        question = st.text_input("Enter your question here:")
 
         if st.button("Generate Answer"):
             with st.spinner("Generating Answer..."):
@@ -139,7 +138,8 @@ def main():
                 save_path = save_pdf_file(uploaded_file,save_folder)
                 
                 rag_tool = tool(save_path)
-                
+                question = st.text_input("Enter your question here:")
+
                 generated_content = generate_text(llm, question,rag_tool )
 
                 st.markdown(generated_content)
