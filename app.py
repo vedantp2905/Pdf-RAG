@@ -3,7 +3,6 @@ import asyncio
 import streamlit as st
 from io import BytesIO
 from docx import Document
-from pydantic.v1 import BaseModel, Field
 from langchain_openai import ChatOpenAI
 from langchain_google_genai import ChatGoogleGenerativeAI
 from crewai import Agent, Task, Crew
@@ -28,7 +27,8 @@ def tool(path):
                 provider="google",  # or google, openai, anthropic, llama2, ...
                 config=dict(
                     model="gemini-1.5-flash",
-                    temperature=0.6
+                    temperature=0.6,
+                    
                 ),
             ),
             embedder=dict(
@@ -103,7 +103,8 @@ def main():
                 if loop is None:
                     loop = asyncio.new_event_loop()
                     asyncio.set_event_loop(loop)
-
+                    
+                os.environ["OPENAI_API_KEY"] = api_key
                 llm = ChatOpenAI(temperature=0.6, max_tokens=2000,api_key=api_key)
                 print("OpenAI Configured")
                 return llm
@@ -118,6 +119,7 @@ def main():
                     loop = asyncio.new_event_loop()
                     asyncio.set_event_loop(loop)
 
+                os.environ["GEMINI_API_KEY"] = api_key
                 llm = ChatGoogleGenerativeAI(
                     model="gemini-1.5-flash",
                     verbose=True,
