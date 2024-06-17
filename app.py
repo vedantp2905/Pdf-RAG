@@ -86,7 +86,7 @@ def generate_text(llm, question, rag_tool):
     return result
 
 def main():
-    global llm
+
     global mod
     mod = None  # Initialize mod here
     
