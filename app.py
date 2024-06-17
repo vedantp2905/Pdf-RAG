@@ -88,7 +88,6 @@ def generate_text(llm, question, rag_tool):
 def main():
     global llm
     st.header('RAG Content Generator')
-    mod = None
 
     with st.sidebar:
         with st.form('Gemini/OpenAI'):
