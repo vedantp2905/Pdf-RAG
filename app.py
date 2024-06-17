@@ -18,10 +18,8 @@ def save_pdf_file(uploaded_file, save_folder):
     
     return save_path
 
-global mod
 def tool(path):
     if mod == 'Gemini':
-        try:
             rag_tool = PDFSearchTool(
                 pdf=path,
                 config=dict(
@@ -42,17 +40,16 @@ def tool(path):
                     ),
                 ),
             )
-            return rag_tool
-        except Exception as e:
-            st.error(f"Error initializing PDFSearchTool: {e}")
-            raise
+        
     else:
         rag_tool = PDFSearchTool(
             pdf=path
         )
-        return rag_tool
+        
+    return rag_tool
     
 def generate_text(llm, question, rag_tool):
+    
     inputs = {'question': question}
     
     writer_agent = Agent(
@@ -92,8 +89,9 @@ def generate_text(llm, question, rag_tool):
     return result
 
 def main():
-    global llm
+
     global mod
+    
     st.header('RAG Content Generator')
 
     with st.sidebar:
@@ -109,10 +107,11 @@ def main():
                     os.environ["OPENAI_API_KEY"] = api_key
                     llm = ChatOpenAI(temperature=0.6, max_tokens=2000)
                     print("OpenAI Configured")
+                    mod = "OpenAI"
+
                     return llm
 
                 llm = asyncio.run(setup_OpenAI())
-                mod = "OpenAI"
                 
             elif model == 'Gemini':
                 async def setup_gemini():
@@ -124,10 +123,11 @@ def main():
                         google_api_key=api_key
                     )
                     print("Gemini Configured")
+                    mod = "Gemini"
+                    
                     return llm
 
                 llm = asyncio.run(setup_gemini())
-                mod = "Gemini"
 
         except Exception as e:
             st.error(f"Error configuring LLM: {e}")
