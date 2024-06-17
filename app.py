@@ -69,8 +69,8 @@ def generate_text(llm, question, rag_tool):
                      The task involves analyzing user queries, retrieving relevant information from the PDFs, and generating clear, concise, and accurate responses.'''),
         agent=writer_agent,
         expected_output="""
-        - A detailed and well-sourced answer to the user's question.
         - Clear and concise synthesis of the retrieved information, formatted in a user-friendly manner.
+        - A detailed and well-sourced answer to the user's question.
         """,
         tools=[rag_tool]
     )
@@ -87,7 +87,6 @@ def generate_text(llm, question, rag_tool):
 def main():
     global llm
     st.header('RAG Content Generator')
-    mod = None
 
     with st.sidebar:
         with st.form('Gemini/OpenAI'):
