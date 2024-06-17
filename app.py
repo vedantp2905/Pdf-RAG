@@ -104,6 +104,7 @@ def main():
                     os.environ["OPENAI_API_KEY"] = api_key
                     llm = ChatOpenAI(temperature=0.6, max_tokens=2000)
                     print("OpenAI Configured")
+                    global mod
                     mod = "OpenAI"
                     return llm
 
@@ -119,6 +120,7 @@ def main():
                         google_api_key=api_key
                     )
                     print("Gemini Configured")
+                    global mod
                     mod = "Gemini"
                     return llm
 
