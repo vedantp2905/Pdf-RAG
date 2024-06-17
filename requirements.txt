@@ -8,3 +8,4 @@ langchain-core
 pysqlite3-binary
 crewai-tools
 PyPDF2
+chromadb
