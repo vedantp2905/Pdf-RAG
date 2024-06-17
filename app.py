@@ -70,7 +70,6 @@ def generate_text(llm, question, rag_tool):
         agent=writer_agent,
         expected_output="""
         - A detailed and well-sourced answer to the user's question.
-        - References to specific sections or pages in the PDFs where the information was found.
         - Clear and concise synthesis of the retrieved information, formatted in a user-friendly manner.
         """,
         tools=[rag_tool]
