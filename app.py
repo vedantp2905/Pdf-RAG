@@ -71,6 +71,7 @@ def generate_text(llm, question, rag_tool):
         expected_output="""
         - Clear and concise synthesis of the retrieved information, formatted in a user-friendly manner.
         - A detailed and well-sourced answer to the user's question.
+        - References to specific sections or pages in the PDFs where the information was found.
         """,
         tools=[rag_tool]
     )
@@ -87,6 +88,7 @@ def generate_text(llm, question, rag_tool):
 def main():
     global llm
     st.header('RAG Content Generator')
+    mod = None
 
     with st.sidebar:
         with st.form('Gemini/OpenAI'):
