@@ -3,6 +3,7 @@ import asyncio
 import streamlit as st
 from io import BytesIO
 from docx import Document
+from pydantic.v1 import BaseModel, Field
 from langchain_openai import ChatOpenAI
 from langchain_google_genai import ChatGoogleGenerativeAI
 from crewai import Agent, Task, Crew
