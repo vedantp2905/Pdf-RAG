@@ -18,8 +18,9 @@ def save_pdf_file(uploaded_file, save_folder):
     
     return save_path
 
-def tool(path, mod):
-    if mod == 'Gemini':
+
+def tool(path):
+    try:
         rag_tool = PDFSearchTool(
             pdf=path,
             config=dict(
@@ -40,11 +41,10 @@ def tool(path, mod):
                 ),
             ),
         )
-    else:
-        rag_tool = PDFSearchTool(
-            pdf=path
-        )
-    return rag_tool
+        return rag_tool
+    except Exception as e:
+        st.error(f"Error initializing PDFSearchTool: {e}")
+        raise
 
 def generate_text(llm, question, rag_tool):
     inputs = {'question': question}
@@ -86,85 +86,78 @@ def generate_text(llm, question, rag_tool):
     return result
 
 def main():
-    global llm
-    global mod
+    st.header('AI RAG Content Generator')
     
-    st.header('RAG Content Generator')
-
     with st.sidebar:
         with st.form('Gemini/OpenAI'):
             model = st.radio('Choose Your LLM', ('Gemini', 'OpenAI'))
-            api_key = st.text_input('Enter your API key', type="password")
+            api_key = st.text_input(f'Enter your API key', type="password")
             submitted = st.form_submit_button("Submit")
 
     if api_key and submitted:
-        try:
-            if model == 'OpenAI':
-                async def setup_OpenAI():
-                    os.environ["OPENAI_API_KEY"] = api_key
-                    llm = ChatOpenAI(temperature=0.6, max_tokens=2000)
-                    print("OpenAI Configured")
-                    global mod
-                    mod = "OpenAI"
-                    return llm
+        if model == 'OpenAI':
+            async def setup_OpenAI():
+                loop = asyncio.get_event_loop()
+                if loop is None:
+                    loop = asyncio.new_event_loop()
+                    asyncio.set_event_loop(loop)
 
-                llm = asyncio.run(setup_OpenAI())
-                
-            elif model == 'Gemini':
-                async def setup_gemini():
-                    os.environ["GOOGLE_API_KEY"] = api_key
-                    llm = ChatGoogleGenerativeAI(
-                        model="gemini-1.5-flash",
-                        verbose=True,
-                        temperature=0.6,
-                        google_api_key=api_key
-                    )
-                    print("Gemini Configured")
-                    global mod
-                    mod = "Gemini"
-                    return llm
+                os.environ["OPENAI_API_KEY"] = api_key
+                llm = ChatOpenAI(temperature=0.6, max_tokens=2000)
+                print("OpenAI Configured")
+                return llm
 
-                llm = asyncio.run(setup_gemini())
+            llm = asyncio.run(setup_OpenAI())
 
-        except Exception as e:
-            st.error(f"Error configuring LLM: {e}")
-            return
+        elif model == 'Gemini':
+            async def setup_gemini():
+                loop = asyncio.get_event_loop()
+                if loop is None:
+                    loop = asyncio.new_event_loop()
+                    asyncio.set_event_loop(loop)
 
-    uploaded_file = st.file_uploader("Choose a PDF file", type='pdf')
+                llm = ChatGoogleGenerativeAI(
+                    model="gemini-1.5-flash",
+                    verbose=True,
+                    temperature=0.6,
+                    google_api_key=api_key
+                )
+                print("Gemini Configured")
+                return llm
 
-    if uploaded_file is not None:
-        try:
-            save_folder = 'Saved Files'
-            saved_path = save_pdf_file(uploaded_file, save_folder)
-            rag_tool = tool(saved_path, mod)
-        except Exception as e:
-            st.error(f"Error processing uploaded file: {e}")
-            return
-
-        question = st.text_input("Enter your question:")
+            llm = asyncio.run(setup_gemini())
+        
+        question = st.text_input("Enter your question here:")
 
         if st.button("Generate Answer"):
             with st.spinner("Generating Answer..."):
-                try:
-                    generated_content = generate_text(llm, question, rag_tool)
-                    st.markdown(generated_content)
+                
+                save_folder = 'Saved Files'
+      
+                uploaded_file = st.file_uploader("Choose a PDF file", type='pdf')
 
-                    doc = Document()
-                    doc.add_heading(question, level=1)
-                    doc.add_paragraph(generated_content)
+                save_path = save_pdf_file(uploaded_file,save_folder)
+                
+                rag_tool = tool(save_path)
+                
+                generated_content = generate_text(llm, question,rag_tool )
 
-                    buffer = BytesIO()
-                    doc.save(buffer)
-                    buffer.seek(0)
+                st.markdown(generated_content)
 
-                    st.download_button(
-                        label="Download as Word Document",
-                        data=buffer,
-                        file_name=f"{question}.docx",
-                        mime="application/vnd.openxmlformats-officedocument.wordprocessingml.document"
-                    )
-                except Exception as e:
-                    st.error(f"Error generating answer: {e}")
+                doc = Document()
+
+                doc.add_paragraph(generated_content)
+
+                buffer = BytesIO()
+                doc.save(buffer)
+                buffer.seek(0)
+
+                st.download_button(
+                    label="Download as Word Document",
+                    data=buffer,
+                    file_name=f"{question}.docx",
+                    mime="application/vnd.openxmlformats-officedocument.wordprocessingml.document"
+                )
 
 if __name__ == "__main__":
     main()
