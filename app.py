@@ -127,18 +127,21 @@ def main():
 
             llm = asyncio.run(setup_gemini())
         
+    save_folder = 'Saved Files'
+      
+    uploaded_file = st.file_uploader("Choose a PDF file", type='pdf')
 
-        if st.button("Generate Answer"):
+    save_path = save_pdf_file(uploaded_file,save_folder)
+                
+    rag_tool = tool(save_path)
+    
+    question = st.text_input("Enter your question here:")
+
+            
+    if st.button("Generate Answer"):
             with st.spinner("Generating Answer..."):
                 
-                save_folder = 'Saved Files'
-      
-                uploaded_file = st.file_uploader("Choose a PDF file", type='pdf')
-
-                save_path = save_pdf_file(uploaded_file,save_folder)
                 
-                rag_tool = tool(save_path)
-                question = st.text_input("Enter your question here:")
 
                 generated_content = generate_text(llm, question,rag_tool )
 
