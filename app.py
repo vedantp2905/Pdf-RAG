@@ -18,33 +18,40 @@ def save_pdf_file(uploaded_file, save_folder):
     
     return save_path
 
+global mod
 def tool(path):
-    try:
+    if mod == 'Gemini':
+        try:
+            rag_tool = PDFSearchTool(
+                pdf=path,
+                config=dict(
+                    llm=dict(
+                        provider="google",
+                        config=dict(
+                            model="gemini-1.5-flash",
+                            temperature=0.6
+                        ),
+                    ),
+                    embedder=dict(
+                        provider="google",
+                        config=dict(
+                            model="models/embedding-001",
+                            task_type="retrieval_document",
+                            title="Embeddings for PDF",
+                        ),
+                    ),
+                ),
+            )
+            return rag_tool
+        except Exception as e:
+            st.error(f"Error initializing PDFSearchTool: {e}")
+            raise
+    else:
         rag_tool = PDFSearchTool(
-            pdf=path,
-            config=dict(
-                llm=dict(
-                    provider="google",
-                    config=dict(
-                        model="gemini-1.5-flash",
-                        temperature=0.6,
-                    ),
-                ),
-                embedder=dict(
-                    provider="google",
-                    config=dict(
-                        model="models/embedding-001",
-                        task_type="retrieval_document",
-                        title="Embeddings for PDF",
-                    ),
-                ),
-            ),
+            pdf=path
         )
         return rag_tool
-    except Exception as e:
-        st.error(f"Error initializing PDFSearchTool: {e}")
-        raise
-
+    
 def generate_text(llm, question, rag_tool):
     inputs = {'question': question}
     
@@ -86,6 +93,7 @@ def generate_text(llm, question, rag_tool):
 
 def main():
     global llm
+    global mod
     st.header('RAG Content Generator')
 
     with st.sidebar:
@@ -104,8 +112,11 @@ def main():
                     return llm
 
                 llm = asyncio.run(setup_OpenAI())
+                mod = "OpenAI"
+                
             elif model == 'Gemini':
                 async def setup_gemini():
+                    os.environ["GOOGLE_API_KEY"] = api_key
                     llm = ChatGoogleGenerativeAI(
                         model="gemini-1.5-flash",
                         verbose=True,
@@ -116,6 +127,8 @@ def main():
                     return llm
 
                 llm = asyncio.run(setup_gemini())
+                mod = "Gemini"
+
         except Exception as e:
             st.error(f"Error configuring LLM: {e}")
             return
