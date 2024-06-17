@@ -18,37 +18,32 @@ def save_pdf_file(uploaded_file, save_folder):
     
     return save_path
 
-def tool(path):
+def tool(path, google_api_key):
     rag_tool = PDFSearchTool(
-        pdf=path, #path required.
+        pdf=path,
         config=dict(
-            
             llm=dict(
-                provider="google",  # or google, openai, anthropic, llama2, ...
+                provider="google",
                 config=dict(
                     model="gemini-1.5-flash",
                     temperature=0.6,
-                    
                 ),
             ),
             embedder=dict(
-                provider="google",  # or openai, ollama, ...
+                provider="google",
                 config=dict(
                     model="models/embedding-001",
                     task_type="retrieval_document",
                     title="Embeddings for PDF",
-                    
                 ),
             ),
-        )
+        ),
+        google_api_key=google_api_key
     )
     return rag_tool
 
-
 def generate_text(llm, question, rag_tool):
     inputs = {'question': question}
-
-    
     
     writer_agent = Agent(
         role='Research Specialist',
@@ -93,7 +88,7 @@ def main():
     with st.sidebar:
         with st.form('Gemini/OpenAI'):
             model = st.radio('Choose Your LLM', ('Gemini', 'OpenAI'))
-            api_key = st.text_input(f'Enter your API key', type="password")
+            api_key = st.text_input('Enter your API key', type="password")
             submitted = st.form_submit_button("Submit")
 
     if api_key:
@@ -105,7 +100,7 @@ def main():
                     asyncio.set_event_loop(loop)
                     
                 os.environ["OPENAI_API_KEY"] = api_key
-                llm = ChatOpenAI(temperature=0.6, max_tokens=2000,api_key=api_key)
+                llm = ChatOpenAI(temperature=0.6, max_tokens=2000, api_key=api_key)
                 print("OpenAI Configured")
                 return llm
 
@@ -119,7 +114,6 @@ def main():
                     loop = asyncio.new_event_loop()
                     asyncio.set_event_loop(loop)
 
-                os.environ["GEMINI_API_KEY"] = api_key
                 llm = ChatGoogleGenerativeAI(
                     model="gemini-1.5-flash",
                     verbose=True,
@@ -135,24 +129,22 @@ def main():
     uploaded_file = st.file_uploader("Choose a PDF file", type='pdf')
 
     if uploaded_file is not None:
-        
         save_folder = 'Saved Files'
         saved_path = save_pdf_file(uploaded_file, save_folder)
         
-        rag_tool = tool(saved_path)
+        google_api_key = api_key
+        
+        rag_tool = tool(saved_path, google_api_key)
         
         question = st.text_input("Enter your question:")
         
-
         if st.button("Generate Answer"):
             with st.spinner("Generating Answer..."):
-                
-                generated_content = generate_text(llm, question,rag_tool)
-
+                generated_content = generate_text(llm, question, rag_tool)
                 st.markdown(generated_content)
 
                 doc = Document()
-                doc.add_heading(question, level=1)  # Specify the heading level
+                doc.add_heading(question, level=1)
                 doc.add_paragraph(generated_content)
 
                 buffer = BytesIO()
