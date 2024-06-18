@@ -162,29 +162,29 @@ if api_key:
         llm = asyncio.run(setup_gemini())
         mod = 'Gemini'
 
+    rag_tool = tool(mod)
     question = st.text_input("Enter your question:")
 
     if st.button("Generate Answer"):
         
-            rag_tool = tool(mod)
         
-            #with st.spinner("Generating Answer..."):
+            with st.spinner("Generating Answer..."):
                 
-            generated_content = generate_text(llm, question,rag_tool)
+                generated_content = generate_text(llm, question,rag_tool)
 
-            st.markdown(generated_content)
+                st.markdown(generated_content)
 
-            doc = Document()
-            doc.add_heading(question, level=1)  # Specify the heading level
-            doc.add_paragraph(generated_content)
+            # doc = Document()
+            # doc.add_heading(question, level=1)  # Specify the heading level
+            # doc.add_paragraph(generated_content)
 
-            buffer = BytesIO()
-            doc.save(buffer)
-            buffer.seek(0)
+            # buffer = BytesIO()
+            # doc.save(buffer)
+            # buffer.seek(0)
             
-            st.download_button(
-                    label="Download as Word Document",
-                    data=buffer,
-                    file_name=f"{question}.docx",
-                    mime="application/vnd.openxmlformats-officedocument.wordprocessingml.document"
-                )
+            # st.download_button(
+            #         label="Download as Word Document",
+            #         data=buffer,
+            #         file_name=f"{question}.docx",
+            #         mime="application/vnd.openxmlformats-officedocument.wordprocessingml.document"
+            #     )
