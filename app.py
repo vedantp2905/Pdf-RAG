@@ -53,22 +53,22 @@ def generate_text(llm, question, rag_tool):
     
     
     writer_agent = Agent(
-        role='Research Specialist',
-        goal='To accurately and efficiently answer question',
-        backstory='''
-        Alex has always been passionate about research and information synthesis. With a background in library science 
-        and information technology, Alex developed a keen eye for finding precise information in vast databases and documents.
-        Joining the AI research team, Alex now uses advanced PDF retrieval tools to help users find accurate answers quickly.
-        Alex's meticulous nature and dedication to accuracy make them the perfect fit for the role of Research Specialist, ensuring
-        that every question is answered with reliable and well-sourced information.
-        ''',
-        verbose=True,
-        allow_delegation=False,
-        llm=llm 
-    )
+    role='Customer Service Specialist',
+    goal='To accurately and efficiently answer customer questions',
+    backstory='''
+    As a seasoned Customer Service Specialist, this bot has honed its 
+    skills in delivering prompt and precise solutions to customer queries.
+    With a background in handling diverse customer needs across various industries,
+    it ensures top-notch service with every interaction.
+    ''',
+    verbose=True,
+    allow_delegation=False,
+    llm=llm
+)
+
 
     task_writer = Task(
-        description=('''Use the PDF RAG search tool to accurately and efficiently answer questions. 
+        description=('''Use the PDF RAG search tool to accurately and efficiently answer customer question. 
                      The task involves analyzing user queries and generating clear, concise, and accurate responses.'''),
         agent=writer_agent,
         expected_output="""
@@ -83,7 +83,7 @@ def generate_text(llm, question, rag_tool):
         agents=[writer_agent],
         tasks=[task_writer],
         verbose=2,
-        context={"Question ": question}
+        context={"Customer Question ": question}
     )
 
     result = crew.kickoff(inputs=inputs)
