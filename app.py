@@ -48,7 +48,9 @@ def tool(mod):
     )
     
     else:
-        rag_tool = DirectorySearchTool()
+        rag_tool = DirectorySearchTool(        
+        directory="Saved Files", #path required of directory
+)
         
     return rag_tool
         
