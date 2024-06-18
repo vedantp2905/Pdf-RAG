@@ -49,7 +49,19 @@ def tool(mod):
     else:
         rag_tool = DirectorySearchTool(
         directory="Saved Files", #path required of directory
+        config=dict(
+            
+            embedder=dict(
+                provider="openai",  # or openai, ollama, ...
+                config=dict(
+                    model="text-embedding-ada-002",
+                    task_type="retrieval_document",
+                    title="Embeddings for PDF",
+                    
+                ),
+            ),
         )
+    )
         
     return rag_tool
         
