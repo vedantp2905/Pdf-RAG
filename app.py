@@ -120,7 +120,7 @@ st.header('RAG Content Generator')
 mod = None
 with st.sidebar:
     with st.form('Gemini/OpenAI'):
-        model = st.radio('Choose Your LLM', (('Gemini')))
+        model = st.radio('Choose Your LLM', ['Gemini'])
         api_key = st.text_input(f'Enter your API key', type="password")
         submitted = st.form_submit_button("Submit")
 
