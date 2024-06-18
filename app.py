@@ -79,11 +79,12 @@ def generate_text(llm, question, rag_tool):
 
 
     task_writer = Task(
-        description=('''Use the PDF RAG search tool to accurately and efficiently answer customer question. 
+        description=(f'''Use the PDF RAG search tool to accurately and efficiently answer customer question. 
+                     The customer question is : {question}
                      The task involves analyzing user queries and generating clear, concise, and accurate responses.'''),
         agent=writer_agent,
         expected_output="""
-        - A detailed and well-sourced answer to the question.
+        - A detailed and well-sourced answer to customer's question.
         - References to specific sections or pages in the PDFs where the information was found.
         - Clear and concise synthesis of the retrieved information, formatted in a user-friendly manner.
         """,
