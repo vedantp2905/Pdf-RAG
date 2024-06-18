@@ -61,7 +61,7 @@ def tool(mod):
             embedder=dict(
                 provider="openai",  # or openai, ollama, ...
                 config=dict(
-                    model="models/text-embedding-ada-002",
+                    model="text-embedding-3-small",
                     
                 ),
             ),
