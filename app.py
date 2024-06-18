@@ -54,7 +54,7 @@ def generate_text(llm, question, rag_tool):
     
     writer_agent = Agent(
         role='Research Specialist',
-        goal='To accurately and efficiently retrieve and synthesize information from PDFs to answer user questions.',
+        goal='To accurately and efficiently answer user questions.',
         backstory='''
         Alex has always been passionate about research and information synthesis. With a background in library science 
         and information technology, Alex developed a keen eye for finding precise information in vast databases and documents.
@@ -68,8 +68,8 @@ def generate_text(llm, question, rag_tool):
     )
 
     task_writer = Task(
-        description=('''Use the PDF RAG search tool to accurately and efficiently retrieve and synthesize information from provided PDFs to answer user questions. 
-                     The task involves analyzing user queries, retrieving relevant information from the PDFs, and generating clear, concise, and accurate responses.'''),
+        description=('''Use the PDF RAG search tool to accurately and efficiently answer user questions. 
+                     The task involves analyzing user queries and generating clear, concise, and accurate responses.'''),
         agent=writer_agent,
         expected_output="""
         - A detailed and well-sourced answer to the user's question.
