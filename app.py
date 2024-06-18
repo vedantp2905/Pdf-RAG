@@ -72,7 +72,7 @@ def generate_text(llm, question, rag_tool):
                      The task involves analyzing user queries and generating clear, concise, and accurate responses.'''),
         agent=writer_agent,
         expected_output="""
-        - A detailed and well-sourced answer to the user's question.
+        - A detailed and well-sourced answer to the question.
         - References to specific sections or pages in the PDFs where the information was found.
         - Clear and concise synthesis of the retrieved information, formatted in a user-friendly manner.
         """,
@@ -82,7 +82,8 @@ def generate_text(llm, question, rag_tool):
     crew = Crew(
         agents=[writer_agent],
         tasks=[task_writer],
-        verbose=2
+        verbose=2,
+        context={"Question ": question}
     )
 
     result = crew.kickoff(inputs=inputs)
