@@ -22,52 +22,52 @@ def save_pdf_file(uploaded_file, save_folder):
 def tool(mod):
     
     
-    # if mod == 'Gemini':
+    if mod == 'Gemini':
+        rag_tool = DirectorySearchTool(
+        directory="Saved Files", #path required of directory
+        config=dict(
+            
+            llm=dict(
+                provider="google",  # or google, openai, anthropic, llama2, ...
+                config=dict(
+                    model="gemini-1.5-flash",
+                    temperature=0.6
+                ),
+            ),
+            embedder=dict(
+                provider="google",  # or openai, ollama, ...
+                config=dict(
+                    model="models/embedding-001",
+                    task_type="retrieval_document",
+                    title="Embeddings"
+
+                    
+                ),
+            ),
+        )
+    )
+    
+    # else:
     #     rag_tool = DirectorySearchTool(
     #     directory="Saved Files", #path required of directory
     #     config=dict(
             
     #         llm=dict(
-    #             provider="google",  # or google, openai, anthropic, llama2, ...
+    #             provider="openai",  # or google, openai, anthropic, llama2, ...
     #             config=dict(
-    #                 model="gemini-1.5-flash",
+    #                 model="gpt-3.5-turbo",
     #                 temperature=0.6
     #             ),
     #         ),
     #         embedder=dict(
-    #             provider="google",  # or openai, ollama, ...
+    #             provider="openai",  # or openai, ollama, ...
     #             config=dict(
-    #                 model="models/embedding-001",
-    #                 task_type="retrieval_document",
-    #                 title="Embeddings"
-
+    #                 model="text-embedding-3-small",
                     
     #             ),
     #         ),
     #     )
     # )
-    
- 
-    rag_tool = DirectorySearchTool(
-         directory="Saved Files", #path required of directory
-         config=dict(
-            
-             llm=dict(
-                 provider="openai",  # or google, openai, anthropic, llama2, ...
-                 config=dict(
-                     model="gpt-3.5-turbo",
-                     temperature=0.6
-             ),
-             ),
-             embedder=dict(
-                 provider="openai",  # or openai, ollama, ...
-                 config=dict(
-                     model="text-embedding-3-small",
-                    
-                 ),
-             ),
-         )
-    )
         
     return rag_tool
         
@@ -98,7 +98,7 @@ def generate_text(llm, question, rag_tool):
     task_writer = Task(
         description=(f'''Use the PDF RAG search tool to accurately and efficiently answer customer question. 
                      The customer question is : {question}
-                     The task involves analyzing user queries and generating clear, concise, summarized, and accurate responses.'''),
+                     The task involves analyzing user queries and generating clear, concise, and accurate responses.'''),
         agent=writer_agent,
         expected_output="""
         - A detailed and well-sourced answer to customer's question.
@@ -122,25 +122,25 @@ st.header('RAG Content Generator')
 mod = None
 with st.sidebar:
     with st.form('Gemini/OpenAI'):
-        model = st.radio('Choose Your LLM', ['Gemini','OpenAI'])
+        model = st.radio('Choose Your LLM', ['Gemini'])
         api_key = st.text_input(f'Enter your API key', type="password")
         submitted = st.form_submit_button("Submit")
 
 if api_key:
-    if model == 'OpenAI':
-        async def setup_OpenAI():
-            loop = asyncio.get_event_loop()
-            if loop is None:
-                loop = asyncio.new_event_loop()
-                asyncio.set_event_loop(loop)
+    # if model == 'OpenAI':
+    #     async def setup_OpenAI():
+    #         loop = asyncio.get_event_loop()
+    #         if loop is None:
+    #             loop = asyncio.new_event_loop()
+    #             asyncio.set_event_loop(loop)
 
-            os.environ["OPENAI_API_KEY"] = api_key
-            llm = ChatOpenAI(temperature=0.6, max_tokens=2000)
-            print("OpenAI Configured")
-            return llm
+    #         os.environ["OPENAI_API_KEY"] = api_key
+    #         llm = ChatOpenAI(temperature=0.6, max_tokens=2000)
+    #         print("OpenAI Configured")
+    #         return llm
 
-        llm = asyncio.run(setup_OpenAI())
-        mod = 'OpenAI'
+    #     llm = asyncio.run(setup_OpenAI())
+    #     mod = 'OpenAI'
 
     if model == 'Gemini':
         async def setup_gemini():
@@ -157,6 +157,7 @@ if api_key:
                 temperature=0.6,
                 google_api_key=api_key
             )
+            print(llm)
             print("Gemini Configured")
             return llm
 
