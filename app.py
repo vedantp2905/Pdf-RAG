@@ -98,7 +98,7 @@ def generate_text(llm, question, rag_tool):
     task_writer = Task(
         description=(f'''Use the PDF RAG search tool to accurately and efficiently answer customer question. 
                      The customer question is : {question}
-                     The task involves analyzing user queries and generating clear, concise, and accurate responses.'''),
+                     The task involves analyzing user queries and generating clear, concise, summarized, and accurate responses.'''),
         agent=writer_agent,
         expected_output="""
         - A detailed and well-sourced answer to customer's question.
@@ -157,7 +157,6 @@ if api_key:
                 temperature=0.6,
                 google_api_key=api_key
             )
-            print(llm)
             print("Gemini Configured")
             return llm
 
