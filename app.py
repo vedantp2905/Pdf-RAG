@@ -48,27 +48,8 @@ def tool(mod):
     
     else:
         rag_tool = DirectorySearchTool(
-    directory="Saved Files",
-    config=dict(
-        llm=dict(
-            provider="openai",  # or google, anthropic, llama2, ...
-            config=dict(
-                model="text-davinci-003",  # Adjust model name as per OpenAI's offerings
-                temperature=0.6
-            ),
-        ),
-        embedder=dict(
-            provider="openai",  # or google, ollama, ...
-            config=dict(
-                model="text-embedding-001",  # Adjust model name as per OpenAI's embedding model
-                task_type="retrieval_document",
-                title="Embeddings for PDF",
-                embedding_dim=768  # Ensure this matches OpenAI's model dimensionality
-            ),
-        ),
-    )
-)
-
+        directory="Saved Files", #path required of directory
+        )
         
     return rag_tool
         
