@@ -6,7 +6,8 @@ from docx import Document
 from langchain_openai import ChatOpenAI
 from langchain_google_genai import ChatGoogleGenerativeAI
 from crewai import Agent, Task, Crew
-from crewai_tools import PDFSearchTool
+from crewai_tools import DirectorySearchTool
+
 
 def save_pdf_file(uploaded_file, save_folder):
     if not os.path.exists(save_folder):
@@ -18,9 +19,9 @@ def save_pdf_file(uploaded_file, save_folder):
     
     return save_path
 
-def tool(path):
-    rag_tool = PDFSearchTool(
-        pdf=path, #path required.
+def tool():
+    rag_tool = DirectorySearchTool(
+        directory="Saved Files", #path required of directory
         config=dict(
             
             llm=dict(
@@ -45,6 +46,7 @@ def tool(path):
 
 
 def generate_text(llm, question, rag_tool):
+
     inputs = {'question': question}
 
     
@@ -61,7 +63,7 @@ def generate_text(llm, question, rag_tool):
         ''',
         verbose=True,
         allow_delegation=False,
-        llm=llm
+        llm=llm 
     )
 
     task_writer = Task(
@@ -85,85 +87,76 @@ def generate_text(llm, question, rag_tool):
     result = crew.kickoff(inputs=inputs)
     return result
 
-def main():
-   
-    st.header('RAG Content Generator')
-    mod = None
 
-    with st.sidebar:
-        with st.form('Gemini/OpenAI'):
-            model = st.radio('Choose Your LLM', ('Gemini', 'OpenAI'))
-            api_key = st.text_input(f'Enter your API key', type="password")
-            submitted = st.form_submit_button("Submit")
+st.header('RAG Content Generator')
+mod = None
+with st.sidebar:
+    with st.form('Gemini/OpenAI'):
+        model = st.radio('Choose Your LLM', ('Gemini', 'OpenAI'))
+        api_key = st.text_input(f'Enter your API key', type="password")
+        submitted = st.form_submit_button("Submit")
 
-    if api_key and submitted:
-        if model == 'OpenAI':
-            async def setup_OpenAI():
-                loop = asyncio.get_event_loop()
-                if loop is None:
-                    loop = asyncio.new_event_loop()
-                    asyncio.set_event_loop(loop)
+if api_key:
+    if model == 'OpenAI':
+        async def setup_OpenAI():
+            loop = asyncio.get_event_loop()
+            if loop is None:
+                loop = asyncio.new_event_loop()
+                asyncio.set_event_loop(loop)
 
-                os.environ["OPENAI_API_KEY"] = api_key
-                llm = ChatOpenAI(temperature=0.6, max_tokens=2000)
-                print("OpenAI Configured")
-                return llm
+            os.environ["OPENAI_API_KEY"] = api_key
+            llm = ChatOpenAI(temperature=0.6, max_tokens=2000)
+            print("OpenAI Configured")
+            return llm
 
-            llm = asyncio.run(setup_OpenAI())
-            mod = 'OpenAI'
+        llm = asyncio.run(setup_OpenAI())
+        mod = 'OpenAI'
 
-        elif model == 'Gemini':
-            async def setup_gemini():
-                loop = asyncio.get_event_loop()
-                if loop is None:
-                    loop = asyncio.new_event_loop()
-                    asyncio.set_event_loop(loop)
+    if model == 'Gemini':
+        async def setup_gemini():
+            loop = asyncio.get_event_loop()
+            if loop is None:
+                loop = asyncio.new_event_loop()
+                asyncio.set_event_loop(loop)
 
-                llm = ChatGoogleGenerativeAI(
-                    model="gemini-1.5-flash",
-                    verbose=True,
-                    temperature=0.6,
-                    google_api_key=api_key
+            os.environ["GOOGLE_API_KEY"] = api_key
+
+            llm = ChatGoogleGenerativeAI(
+                model="gemini-1.5-flash",
+                verbose=True,
+                temperature=0.6,
+                google_api_key=api_key
+            )
+            print(llm)
+            print("Gemini Configured")
+            return llm
+
+        llm = asyncio.run(setup_gemini())
+        mod = 'Gemini'
+
+    question = st.text_input("Enter your question:")
+
+    if st.button("Generate Answer"):
+        
+            rag_tool = tool()
+        
+            #with st.spinner("Generating Answer..."):
+                
+            generated_content = generate_text(llm, question,rag_tool)
+
+            st.markdown(generated_content)
+
+            doc = Document()
+            doc.add_heading(question, level=1)  # Specify the heading level
+            doc.add_paragraph(generated_content)
+
+            buffer = BytesIO()
+            doc.save(buffer)
+            buffer.seek(0)
+            
+            st.download_button(
+                    label="Download as Word Document",
+                    data=buffer,
+                    file_name=f"{question}.docx",
+                    mime="application/vnd.openxmlformats-officedocument.wordprocessingml.document"
                 )
-                print("Gemini Configured")
-                return llm
-
-            llm = asyncio.run(setup_gemini())
-            mod = 'Gemini'
-
-    uploaded_file = st.file_uploader("Choose a PDF file", type='pdf')
-
-    if uploaded_file is not None:
-        
-        save_folder = 'Saved Files'
-        saved_path = save_pdf_file(uploaded_file, save_folder)
-        
-        rag_tool = tool(saved_path)
-        
-        question = st.text_input("Enter your question:")
-        
-
-        if st.button("Generate Answer"):
-            with st.spinner("Generating Answer..."):
-                
-                generated_content = generate_text(llm, question,rag_tool)
-
-                st.markdown(generated_content)
-
-                doc = Document()
-                doc.add_heading(question, level=1)  # Specify the heading level
-                doc.add_paragraph(generated_content)
-
-                buffer = BytesIO()
-                doc.save(buffer)
-                buffer.seek(0)
-                
-                st.download_button(
-                        label="Download as Word Document",
-                        data=buffer,
-                        file_name=f"{question}.docx",
-                        mime="application/vnd.openxmlformats-officedocument.wordprocessingml.document"
-                    )
-
-if __name__ == "__main__":
-    main()
