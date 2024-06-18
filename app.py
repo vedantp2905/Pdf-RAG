@@ -1,6 +1,5 @@
 import os
 import asyncio
-import chromadb
 import streamlit as st
 from io import BytesIO
 from docx import Document
