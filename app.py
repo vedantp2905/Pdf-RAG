@@ -20,8 +20,11 @@ def save_pdf_file(uploaded_file, save_folder):
     
     return save_path
 
-def tool():
-    rag_tool = DirectorySearchTool(
+def tool(mod):
+    
+    
+    if mod == 'Gemini':
+        rag_tool = DirectorySearchTool(
         directory="Saved Files", #path required of directory
         config=dict(
             
@@ -43,7 +46,13 @@ def tool():
             ),
         )
     )
+    
+    else:
+        rag_tool = DirectorySearchTool()
+        
     return rag_tool
+        
+    
 
 
 def generate_text(llm, question, rag_tool):
@@ -140,7 +149,7 @@ if api_key:
 
     if st.button("Generate Answer"):
         
-            rag_tool = tool()
+            rag_tool = tool(mod)
         
             #with st.spinner("Generating Answer..."):
                 
