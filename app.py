@@ -62,7 +62,6 @@ def tool(mod):
                 provider="openai",  # or openai, ollama, ...
                 config=dict(
                     model="text-embedding-ada-002",
-                    task_type="retrieval_document",
                     title="Embeddings for PDF",
                     
                 ),
