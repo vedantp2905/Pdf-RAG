@@ -40,6 +40,7 @@ def tool(mod, api_key):
                 ),
             )
         )
+        
     else:
 
         rag_tool = DirectorySearchTool(
@@ -128,7 +129,6 @@ with st.sidebar:
         submitted = st.form_submit_button("Submit")
 
 mod = None
-llm = None
 
 if api_key:
     if model == 'OpenAI':
