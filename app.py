@@ -123,6 +123,7 @@ def generate_text(llm, question, rag_tool):
 
 st.header('RAG Content Generator')
 mod = None
+llm = None
 with st.sidebar:
     with st.form('Gemini/OpenAI'):
         model = st.radio('Choose Your LLM', ['Gemini','Openai'])
