@@ -19,9 +19,8 @@ def save_pdf_file(uploaded_file, save_folder):
     
     return save_path
 
-def tool(mod,api_key):
+def tool(mod):
     
-
     if mod == 'Gemini':
          rag_tool = DirectorySearchTool(
          directory="Saved Files", #path required of directory
@@ -49,8 +48,6 @@ def tool(mod,api_key):
     
     else:
         
-     os.environ["OPENAI_API_KEY"] = api_key
-
      rag_tool = DirectorySearchTool(
     directory="Saved Files", #path required of directory
      config=dict(
@@ -139,7 +136,7 @@ if api_key:
 
             os.environ["OPENAI_API_KEY"] = api_key
              
-            llm = ChatOpenAI(model='gpt-4-turbo',temperature=0.6, max_tokens=200)
+            llm = ChatOpenAI(model='gpt-4-turbo',temperature=0.6, max_tokens=200,api_key=api_key)
             print("OpenAI Configured")
             return llm
 
@@ -167,7 +164,7 @@ if api_key:
          llm = asyncio.run(setup_gemini())
          mod = 'Gemini'
 
-    rag_tool = tool(mod,api_key)
+    rag_tool = tool(mod)
     question = st.text_input("Enter your question:")
 
     if st.button("Generate Answer"):
