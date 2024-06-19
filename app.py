@@ -41,7 +41,7 @@ def tool(mod, api_key):
             )
         )
     else:
-        os.environ["OPENAI_API_KEY"] = api_key
+
         rag_tool = DirectorySearchTool(
             directory="Saved Files",
             config=dict(
