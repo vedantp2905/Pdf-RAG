@@ -126,7 +126,7 @@ with st.sidebar:
         api_key = st.text_input(f'Enter your API key', type="password")
         submitted = st.form_submit_button("Submit")
 
-if submitted and api_key:
+if api_key:
     if model == 'OpenAI':
         llm = asyncio.run(setup_openai(api_key))
         mod = 'OpenAI'
