@@ -164,7 +164,7 @@ if api_key:
          llm = asyncio.run(setup_gemini())
          mod = 'Gemini'
 
-    rag_tool = tool(mod,api_key)
+    rag_tool = tool(mod)
     question = st.text_input("Enter your question:")
 
     if st.button("Generate Answer"):
