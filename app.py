@@ -36,7 +36,7 @@ def tool(mod):
              embedder=dict(
                  provider="google",  # or openai, ollama, ...
                  config=dict(
-                     model="models/text-embedding-004",
+                     model="models/embedding-001",
                      task_type="retrieval_document",
                      title="Embeddings"
 
