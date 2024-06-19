@@ -104,6 +104,7 @@ def generate_text(llm, question, rag_tool):
         agent=writer_agent,
         expected_output="""
         - A detailed and well-sourced answer to customer's question.
+        - No extra information. Just answer to the question
         - Clear and concise synthesis of the retrieved information, formatted in a user-friendly manner.
         """,
         tools=[rag_tool]
