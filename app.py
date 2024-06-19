@@ -132,16 +132,16 @@ with st.sidebar:
 if api_key:
     if model == 'OpenAI':
          async def setup_OpenAI():
-             loop = asyncio.get_event_loop()
-             if loop is None:
-                 loop = asyncio.new_event_loop()
-                 asyncio.set_event_loop(loop)
+            loop = asyncio.get_event_loop()
+            if loop is None:
+                loop = asyncio.new_event_loop()
+                asyncio.set_event_loop(loop)
 
-             os.environ["OPENAI_API_KEY"] = api_key
+            os.environ["OPENAI_API_KEY"] = api_key
              
-             llm = ChatOpenAI(model='gpt-4-turbo',temperature=0.6, max_tokens=200)
-             print("OpenAI Configured")
-             return llm
+            llm = ChatOpenAI(model='gpt-4-turbo',temperature=0.6, max_tokens=200)
+            print("OpenAI Configured")
+            return llm
 
          llm = asyncio.run(setup_OpenAI())
          mod = 'OpenAI'
@@ -150,18 +150,17 @@ if api_key:
          async def setup_gemini():
              loop = asyncio.get_event_loop()
              if loop is None:
-                 loop = asyncio.new_event_loop()
-                 asyncio.set_event_loop(loop)
+                loop = asyncio.new_event_loop()
+                asyncio.set_event_loop(loop)
 
              os.environ["GOOGLE_API_KEY"] = api_key
 
              llm = ChatGoogleGenerativeAI(
-                 model="gemini-1.5-flash",
-                 verbose=True,
-                 temperature=0.6,
-                 google_api_key=api_key
+                model="gemini-1.5-flash",
+                verbose=True,
+                temperature=0.6,
+                google_api_key=api_key
              )
-             print(llm)
              print("Gemini Configured")
              return llm
 
