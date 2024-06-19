@@ -19,9 +19,10 @@ def save_pdf_file(uploaded_file, save_folder):
     
     return save_path
 
-def tool(mod):
+def tool(mod,api_key):
     
-    
+    os.environ["OPENAI_API_KEY"] = api_key
+
     # if mod == 'Gemini':
     #     rag_tool = DirectorySearchTool(
     #     directory="Saved Files", #path required of directory
@@ -163,7 +164,7 @@ if api_key:
     #     llm = asyncio.run(setup_gemini())
     #     mod = 'Gemini'
 
-    rag_tool = tool(mod)
+    rag_tool = tool(mod,api_key)
     question = st.text_input("Enter your question:")
 
     if st.button("Generate Answer"):
