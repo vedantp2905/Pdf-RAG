@@ -60,9 +60,11 @@ def tool(mod):
                  ),
              ),
              embedder=dict(
-                 provider="openai",  # or openai, ollama, ...
+                 provider="google",  # or openai, ollama, ...
                  config=dict(
-                     model="text-embedding-ada-002",
+                     model="models/embedding-001",
+                     task_type="retrieval_document",
+                     title="Embeddings"
                     
                  ),
              ),
