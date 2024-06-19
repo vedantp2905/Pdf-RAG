@@ -62,6 +62,7 @@ def tool(mod, api_key):
         )
     return rag_tool
 
+
 async def setup_openai(api_key):
     os.environ["OPENAI_API_KEY"] = api_key
     llm = ChatOpenAI(model='gpt-4-turbo', temperature=0.6, max_tokens=200)
@@ -127,6 +128,7 @@ with st.sidebar:
         submitted = st.form_submit_button("Submit")
 
 mod = None
+llm = None
 
 if api_key:
     if model == 'OpenAI':
