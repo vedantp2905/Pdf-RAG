@@ -123,7 +123,6 @@ def generate_text(llm, question, rag_tool):
 
 st.header('RAG Content Generator')
 mod = None
-llm = None
 with st.sidebar:
     with st.form('Gemini/OpenAI'):
         model = st.radio('Choose Your LLM', ['Gemini','Openai'])
@@ -132,7 +131,7 @@ with st.sidebar:
 
 if api_key:
     if model == 'OpenAI':
-         async def setup_OpenAI():
+        async def setup_OpenAI():
             loop = asyncio.get_event_loop()
             if loop is None:
                 loop = asyncio.new_event_loop()
@@ -144,26 +143,26 @@ if api_key:
             print("OpenAI Configured")
             return llm
 
-         llm = asyncio.run(setup_OpenAI())
-         mod = 'OpenAI'
+        llm = asyncio.run(setup_OpenAI())
+        mod = 'OpenAI'
 
     elif model == 'Gemini':
          async def setup_gemini():
-             loop = asyncio.get_event_loop()
-             if loop is None:
+            loop = asyncio.get_event_loop()
+            if loop is None:
                 loop = asyncio.new_event_loop()
                 asyncio.set_event_loop(loop)
 
-             os.environ["GOOGLE_API_KEY"] = api_key
+            os.environ["GOOGLE_API_KEY"] = api_key
 
-             llm = ChatGoogleGenerativeAI(
+            llm = ChatGoogleGenerativeAI(
                 model="gemini-1.5-flash",
                 verbose=True,
                 temperature=0.6,
                 google_api_key=api_key
              )
-             print("Gemini Configured")
-             return llm
+            print("Gemini Configured")
+            return llm
 
          llm = asyncio.run(setup_gemini())
          mod = 'Gemini'
