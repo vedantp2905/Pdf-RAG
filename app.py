@@ -19,36 +19,36 @@ def save_pdf_file(uploaded_file, save_folder):
     
     return save_path
 
-def tool(mod,api_key):
+def tool(mod):
     
-    os.environ["OPENAI_API_KEY"] = api_key
 
-    # if mod == 'Gemini':
-    #     rag_tool = DirectorySearchTool(
-    #     directory="Saved Files", #path required of directory
-    #     config=dict(
+    if mod == 'Gemini':
+         rag_tool = DirectorySearchTool(
+         directory="Saved Files", #path required of directory
+         config=dict(
             
-    #         llm=dict(
-    #             provider="google",  # or google, openai, anthropic, llama2, ...
-    #             config=dict(
-    #                 model="gemini-1.5-flash",
-    #                 temperature=0.6
-    #             ),
-    #         ),
-    #         embedder=dict(
-    #             provider="google",  # or openai, ollama, ...
-    #             config=dict(
-    #                 model="models/embedding-001",
-    #                 task_type="retrieval_document",
-    #                 title="Embeddings"
+             llm=dict(
+                 provider="google",  # or google, openai, anthropic, llama2, ...
+                 config=dict(
+                     model="gemini-1.5-flash",
+                     temperature=0.6
+                 ),
+             ),
+             embedder=dict(
+                 provider="google",  # or openai, ollama, ...
+                 config=dict(
+                     model="models/embedding-001",
+                     task_type="retrieval_document",
+                     title="Embeddings"
 
                     
-    #             ),
-    #         ),
-    #     )
-    # )
+                 ),
+             ),
+         )
+     )
     
-    rag_tool = DirectorySearchTool(
+    else:
+     rag_tool = DirectorySearchTool(
     directory="Saved Files", #path required of directory
      config=dict(
             
@@ -122,7 +122,7 @@ st.header('RAG Content Generator')
 mod = None
 with st.sidebar:
     with st.form('Gemini/OpenAI'):
-        model = st.radio('Choose Your LLM', ['Openai'])
+        model = st.radio('Choose Your LLM', ['Gemini','Openai'])
         api_key = st.text_input(f'Enter your API key', type="password")
         submitted = st.form_submit_button("Submit")
 
@@ -142,27 +142,27 @@ if api_key:
          llm = asyncio.run(setup_OpenAI())
          mod = 'OpenAI'
 
-    # if model == 'Gemini':
-    #     async def setup_gemini():
-    #         loop = asyncio.get_event_loop()
-    #         if loop is None:
-    #             loop = asyncio.new_event_loop()
-    #             asyncio.set_event_loop(loop)
+    if model == 'Gemini':
+         async def setup_gemini():
+             loop = asyncio.get_event_loop()
+             if loop is None:
+                 loop = asyncio.new_event_loop()
+                 asyncio.set_event_loop(loop)
 
-    #         os.environ["GOOGLE_API_KEY"] = api_key
+             os.environ["GOOGLE_API_KEY"] = api_key
 
-    #         llm = ChatGoogleGenerativeAI(
-    #             model="gemini-1.5-flash",
-    #             verbose=True,
-    #             temperature=0.6,
-    #             google_api_key=api_key
-    #         )
-    #         print(llm)
-    #         print("Gemini Configured")
-    #         return llm
+             llm = ChatGoogleGenerativeAI(
+                 model="gemini-1.5-flash",
+                 verbose=True,
+                 temperature=0.6,
+                 google_api_key=api_key
+             )
+             print(llm)
+             print("Gemini Configured")
+             return llm
 
-    #     llm = asyncio.run(setup_gemini())
-    #     mod = 'Gemini'
+         llm = asyncio.run(setup_gemini())
+         mod = 'Gemini'
 
     rag_tool = tool(mod,api_key)
     question = st.text_input("Enter your question:")
