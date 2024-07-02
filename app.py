@@ -7,11 +7,7 @@ from langchain_openai import ChatOpenAI
 from langchain_google_genai import ChatGoogleGenerativeAI
 from crewai import Agent, Task, Crew
 from crewai_tools import DirectorySearchTool
-from fastapi import FastAPI, Request
-from fastapi.responses import JSONResponse
-import uvicorn
 
-app = FastAPI()
 
 def save_pdf_file(uploaded_file, save_folder):
     if not os.path.exists(save_folder):
@@ -24,71 +20,87 @@ def save_pdf_file(uploaded_file, save_folder):
     return save_path
 
 def tool(mod):
+    
     if mod == 'Gemini':
-        rag_tool = DirectorySearchTool(
-            directory="Saved Files",
-            config=dict(
-                llm=dict(
-                    provider="google",
-                    config=dict(
-                        model="gemini-1.5-flash",
-                        temperature=0.6
-                    ),
-                ),
-                embedder=dict(
-                    provider="google",
-                    config=dict(
-                        model="models/embedding-001",
-                        task_type="retrieval_document",
-                        title="Embeddings"
-                    ),
-                ),
-            )
-        )
+         rag_tool = DirectorySearchTool(
+         directory="Saved Files", #path required of directory
+         config=dict(
+            
+             llm=dict(
+                 provider="google",  # or google, openai, anthropic, llama2, ...
+                 config=dict(
+                     model="gemini-1.5-flash",
+                     temperature=0.6
+                 ),
+             ),
+             embedder=dict(
+                 provider="google",  # or openai, ollama, ...
+                 config=dict(
+                     model="models/embedding-001",
+                     task_type="retrieval_document",
+                     title="Embeddings"
+
+                    
+                 ),
+             ),
+         )
+     )
+    
     else:
-        rag_tool = DirectorySearchTool(
-            directory="Saved Files",
-            config=dict(
-                llm=dict(
-                    provider="openai",
-                    config=dict(
-                        model="gpt-3.5-turbo",
-                        temperature=0.6
-                    ),
-                ),
-                embedder=dict(
-                    provider="google",
-                    config=dict(
-                        model="models/embedding-001",
-                        task_type="retrieval_document",
-                        title="Embeddings"
-                    ),
-                ),
-            )
-        )
+        
+     rag_tool = DirectorySearchTool(
+    directory="Saved Files", #path required of directory
+     config=dict(
+            
+             llm=dict(
+                 provider="openai",  # or google, openai, anthropic, llama2, ...
+                 config=dict(
+                     model="gpt-3.5-turbo",
+                     temperature=0.6
+                 ),
+             ),
+             embedder=dict(
+                 provider="google",  # or openai, ollama, ...
+                 config=dict(
+                     model="models/embedding-001",
+                     task_type="retrieval_document",
+                     title="Embeddings"
+                    
+                 ),
+             ),
+         )
+     )
+        
     return rag_tool
+        
+    
+
 
 def generate_text(llm, question, rag_tool):
+
     inputs = {'question': question}
+
+    
     
     writer_agent = Agent(
-        role='Customer Service Specialist',
-        goal='To accurately and efficiently answer customer questions',
-        backstory='''
-        As a seasoned Customer Service Specialist, this bot has honed its 
-        skills in delivering prompt and precise solutions to customer queries.
-        With a background in handling diverse customer needs across various industries,
-        it ensures top-notch service with every interaction.
-        ''',
-        verbose=True,
-        allow_delegation=False,
-        llm=llm
-    )
+    role='Customer Service Specialist',
+    goal='To accurately and efficiently answer customer questions',
+    backstory='''
+    As a seasoned Customer Service Specialist, this bot has honed its 
+    skills in delivering prompt and precise solutions to customer queries.
+    With a background in handling diverse customer needs across various industries,
+    it ensures top-notch service with every interaction.
+    ''',
+    verbose=True,
+    allow_delegation=False,
+    llm=llm
+)
+
 
     task_writer = Task(
         description=(f'''Use the PDF RAG search tool to accurately and efficiently answer customer question. 
-                         The customer question is : {question}
-                         The task involves analyzing user queries and generating clear, concise, and accurate responses.'''),
+                     The customer question is : {question}
+                     The task involves analyzing user queries and generating clear, concise, and accurate responses.'''),
         agent=writer_agent,
         expected_output="""
         - A detailed and well-sourced answer to customer's question.
@@ -108,12 +120,6 @@ def generate_text(llm, question, rag_tool):
     result = crew.kickoff(inputs=inputs)
     return result
 
-@app.post("/generate_answer")
-async def generate_answer(request: Request):
-    data = await request.json()
-    question = data['question']
-    generated_content = generate_text(llm, question, rag_tool)
-    return JSONResponse(content={"answer": generated_content})
 
 st.header('RAG Content Generator')
 mod = None
@@ -141,7 +147,7 @@ if api_key:
         mod = 'OpenAI'
 
     elif model == 'Gemini':
-        async def setup_gemini():
+         async def setup_gemini():
             loop = asyncio.get_event_loop()
             if loop is None:
                 loop = asyncio.new_event_loop()
@@ -154,19 +160,21 @@ if api_key:
                 verbose=True,
                 temperature=0.6,
                 google_api_key=api_key
-            )
+             )
             print("Gemini Configured")
             return llm
 
-        llm = asyncio.run(setup_gemini())
-        mod = 'Gemini'
+         llm = asyncio.run(setup_gemini())
+         mod = 'Gemini'
 
     rag_tool = tool(mod)
     question = st.text_input("Enter your question:")
 
     if st.button("Generate Answer"):
+
         with st.spinner("Generating Answer..."):
-            generated_content = generate_text(llm, question, rag_tool)
+        
+            generated_content = generate_text(llm, question,rag_tool)
             st.markdown(generated_content)
 
     # doc = Document()
@@ -183,6 +191,3 @@ if api_key:
     #         file_name=f"{question}.docx",
     #         mime="application/vnd.openxmlformats-officedocument.wordprocessingml.document"
     #     )
-
-if __name__ == "__main__":
-    uvicorn.run(app, host="0.0.0.0", port=8000)
