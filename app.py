@@ -9,102 +9,32 @@ from crewai import Agent, Task, Crew
 from crewai_tools import DirectorySearchTool
 
 
-def save_pdf_file(uploaded_file, save_folder):
-    if not os.path.exists(save_folder):
-        os.makedirs(save_folder)
-    
-    save_path = os.path.join(save_folder, uploaded_file.name)
-    with open(save_path, 'wb') as f:
-        f.write(uploaded_file.getbuffer())
-    
-    return save_path
-
-def tool(mod):
-    
-    if mod == 'Gemini':
-         rag_tool = DirectorySearchTool(
-         directory="Saved Files", #path required of directory
-         config=dict(
-            
-             llm=dict(
-                 provider="google",  # or google, openai, anthropic, llama2, ...
-                 config=dict(
-                     model="gemini-1.5-flash",
-                     temperature=0.6
-                 ),
-             ),
-             embedder=dict(
-                 provider="google",  # or openai, ollama, ...
-                 config=dict(
-                     model="models/embedding-001",
-                     task_type="retrieval_document",
-                     title="Embeddings"
-
-                    
-                 ),
-             ),
-         )
-     )
-    
-    else:
-        
-     rag_tool = DirectorySearchTool(
-    directory="Saved Files", #path required of directory
-     config=dict(
-            
-             llm=dict(
-                 provider="openai",  # or google, openai, anthropic, llama2, ...
-                 config=dict(
-                     model="gpt-3.5-turbo",
-                     temperature=0.6
-                 ),
-             ),
-             embedder=dict(
-                 provider="google",  # or openai, ollama, ...
-                 config=dict(
-                     model="models/embedding-001",
-                     task_type="retrieval_document",
-                     title="Embeddings"
-                    
-                 ),
-             ),
-         )
-     )
-        
-    return rag_tool
-        
-    
-
-
+# Function to handle RAG content generation
 def generate_text(llm, question, rag_tool):
-
     inputs = {'question': question}
 
-    
-    
     writer_agent = Agent(
-    role='Customer Service Specialist',
-    goal='To accurately and efficiently answer customer questions',
-    backstory='''
-    As a seasoned Customer Service Specialist, this bot has honed its 
-    skills in delivering prompt and precise solutions to customer queries.
-    With a background in handling diverse customer needs across various industries,
-    it ensures top-notch service with every interaction.
-    ''',
-    verbose=True,
-    allow_delegation=False,
-    llm=llm
-)
-
+        role='Customer Service Specialist',
+        goal='To accurately and efficiently answer customer questions',
+        backstory='''
+        As a seasoned Customer Service Specialist, this bot has honed its 
+        skills in delivering prompt and precise solutions to customer queries.
+        With a background in handling diverse customer needs across various industries,
+        it ensures top-notch service with every interaction.
+        ''',
+        verbose=True,
+        allow_delegation=False,
+        llm=llm
+    )
 
     task_writer = Task(
-        description=(f'''Use the PDF RAG search tool to accurately and efficiently answer customer question. 
-                     The customer question is : {question}
-                     The task involves analyzing user queries and generating clear, concise, and accurate responses.'''),
+        description=f'''Use the PDF RAG search tool to accurately and efficiently answer customer question. 
+                       The customer question is: {question}
+                       The task involves analyzing user queries and generating clear, concise, and accurate responses.''',
         agent=writer_agent,
         expected_output="""
-        - A detailed and well-sourced answer to customer's question.
-        - No extra information. Just answer to the question
+        - A detailed and well-sourced answer to the customer's question.
+        - No extra information. Just the answer to the question.
         - Clear and concise synthesis of the retrieved information, formatted in a user-friendly manner.
         """,
         tools=[rag_tool]
@@ -120,8 +50,53 @@ def generate_text(llm, question, rag_tool):
     result = crew.kickoff(inputs=inputs)
     return result
 
+# Function to configure RAG tool based on selected model
+def configure_tool(mod):
+    if mod == 'Gemini':
+        rag_tool = DirectorySearchTool(
+            directory="Saved Files",
+            config=dict(
+                llm=dict(
+                    provider="google",
+                    config=dict(
+                        model="gemini-1.5-flash",
+                        temperature=0.6
+                    ),
+                ),
+                embedder=dict(
+                    provider="google",
+                    config=dict(
+                        model="models/embedding-001",
+                        task_type="retrieval_document",
+                        title="Embeddings"
+                    ),
+                ),
+            )
+        )
+    else:
+        rag_tool = DirectorySearchTool(
+            directory="Saved Files",
+            config=dict(
+                llm=dict(
+                    provider="openai",
+                    config=dict(
+                        model="gpt-3.5-turbo",
+                        temperature=0.6
+                    ),
+                ),
+                embedder=dict(
+                    provider="google",
+                    config=dict(
+                        model="models/embedding-001",
+                        task_type="retrieval_document",
+                        title="Embeddings"
+                    ),
+                ),
+            )
+        )
+        
+    return rag_tool
 
-st.header('RAG Content Generator')
 mod = None
 with st.sidebar:
     with st.form('Gemini/OpenAI'):
@@ -139,7 +114,7 @@ if api_key:
 
             os.environ["OPENAI_API_KEY"] = api_key
              
-            llm = ChatOpenAI(model='gpt-4-turbo',temperature=0.6, max_tokens=200,api_key=api_key)
+            llm = ChatOpenAI(model='gpt-4-turbo', temperature=0.6, max_tokens=200, api_key=api_key)
             print("OpenAI Configured")
             return llm
 
@@ -147,7 +122,7 @@ if api_key:
         mod = 'OpenAI'
 
     elif model == 'Gemini':
-         async def setup_gemini():
+        async def setup_gemini():
             loop = asyncio.get_event_loop()
             if loop is None:
                 loop = asyncio.new_event_loop()
@@ -160,34 +135,42 @@ if api_key:
                 verbose=True,
                 temperature=0.6,
                 google_api_key=api_key
-             )
+            )
             print("Gemini Configured")
             return llm
 
-         llm = asyncio.run(setup_gemini())
-         mod = 'Gemini'
+        llm = asyncio.run(setup_gemini())
+        mod = 'Gemini'
 
-    rag_tool = tool(mod)
-    question = st.text_input("Enter your question:")
+    rag_tool = configure_tool(mod)
 
-    if st.button("Generate Answer"):
+        # Initialize Streamlit app title
+    st.title("Chat Bot")
 
-        with st.spinner("Generating Answer..."):
-        
-            generated_content = generate_text(llm, question,rag_tool)
-            st.markdown(generated_content)
+    # Initialize chat history
+    if "messages" not in st.session_state:
+        st.session_state.messages = []
 
-    # doc = Document()
-    # doc.add_heading(question, level=1)  # Specify the heading level
-    # doc.add_paragraph(generated_content)
+    # Display chat messages from history on app rerun
+    for message in st.session_state.messages:
+        with st.empty():
+            if message["role"] == "user":
+                st.markdown(f"**User**: {message['content']}")
+            elif message["role"] == "assistant":
+                st.markdown(f"**Echo Bot**: {message['content']}")
 
-    # buffer = BytesIO()
-    # doc.save(buffer)
-    # buffer.seek(0)
-    
-    # st.download_button(
-    #         label="Download as Word Document",
-    #         data=buffer,
-    #         file_name=f"{question}.docx",
-    #         mime="application/vnd.openxmlformats-officedocument.wordprocessingml.document"
-    #     )
+    # React to user input
+    if prompt := st.text_input("What info do you need?"):
+        # Display user message in chat message container
+        st.markdown(f"**User**: {prompt}")
+        # Add user message to chat history
+        st.session_state.messages.append({"role": "user", "content": prompt})
+
+        # Process user input and generate response
+        response = generate_text(llm,prompt, rag_tool)
+
+
+        # Display assistant response in chat message container
+        st.markdown(f"**Echo Bot**: {response}")
+        # Add assistant response to chat history
+        st.session_state.messages.append({"role": "assistant", "content": response})
