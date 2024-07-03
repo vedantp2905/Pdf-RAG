@@ -7,9 +7,7 @@ from langchain_openai import ChatOpenAI
 from langchain_google_genai import ChatGoogleGenerativeAI
 from crewai import Agent, Task, Crew
 from crewai_tools import DirectorySearchTool
-from dotenv import load_dotenv
 
-load_dotenv('secret.env')
 
 # Function to handle RAG content generation
 def generate_text(llm, question, rag_tool):
@@ -103,9 +101,10 @@ mod = None
 with st.sidebar:
     with st.form('Gemini/OpenAI'):
         model = st.radio('Choose Your LLM', ['Gemini','OpenAI'])
+        api_key = st.text_input(f'Enter your API key', type="password")
         submitted = st.form_submit_button("Submit")
 
-if model:
+if api_key:
     if model == 'OpenAI':
         async def setup_OpenAI():
             loop = asyncio.get_event_loop()
@@ -113,9 +112,9 @@ if model:
                 loop = asyncio.new_event_loop()
                 asyncio.set_event_loop(loop)
 
-            os.environ["OPENAI_API_KEY"] = os.getenv('OPENAI_API_KEY')
+            os.environ["OPENAI_API_KEY"] = api_key
              
-            llm = ChatOpenAI(model='gpt-4-turbo', temperature=0.6, max_tokens=1000, api_key=os.getenv('OPENAI_API_KEY'))
+            llm = ChatOpenAI(model='gpt-4-turbo', temperature=0.6, max_tokens=1000, api_key=api_key)
             print("OpenAI Configured")
             return llm
 
@@ -129,13 +128,13 @@ if model:
                 loop = asyncio.new_event_loop()
                 asyncio.set_event_loop(loop)
 
-            os.environ["GOOGLE_API_KEY"] = load_dotenv('')
+            os.environ["GOOGLE_API_KEY"] = api_key
 
             llm = ChatGoogleGenerativeAI(
                 model="gemini-1.5-flash",
                 verbose=True,
                 temperature=0.6,
-                google_api_key=os.getenv('GOOGLE_API_KEY')
+                google_api_key=api_key
             )
             print("Gemini Configured")
             return llm
