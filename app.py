@@ -7,7 +7,6 @@ from langchain_openai import ChatOpenAI
 from langchain_google_genai import ChatGoogleGenerativeAI
 from crewai import Agent, Task, Crew
 from crewai_tools import DirectorySearchTool
-from dotenv import load_dotenv
 
 
 # Function to handle RAG content generation
@@ -115,9 +114,9 @@ if submitted:
                 loop = asyncio.new_event_loop()
                 asyncio.set_event_loop(loop)
 
-            os.environ["OPENAI_API_KEY"] = os.getenv('OPENAI_API_KEY')
+            os.environ["OPENAI_API_KEY"] = secrets.OPENAI_API_KEY
              
-            llm = ChatOpenAI(model='gpt-4-turbo', temperature=0.6, max_tokens=1000, api_key=os.getenv('OPENAI_API_KEY'))
+            llm = ChatOpenAI(model='gpt-4-turbo', temperature=0.6, max_tokens=1000, api_key=secrets.OPENAI_API_KEY)
             print("OpenAI Configured")
             return llm
 
@@ -131,13 +130,13 @@ if submitted:
                 loop = asyncio.new_event_loop()
                 asyncio.set_event_loop(loop)
 
-            os.environ["GOOGLE_API_KEY"] = os.getenv("GOOGLE_API_KEY")
+            os.environ["GOOGLE_API_KEY"] = secrets.GOOGLE_API_KEY
 
             llm = ChatGoogleGenerativeAI(
                 model="gemini-1.5-flash",
                 verbose=True,
                 temperature=0.6,
-                google_api_key=os.getenv('GOOGLE_API_KEY')
+                google_api_key=secrets.GOOGLE_API_KEY
             )
             print("Gemini Configured")
             return llm
