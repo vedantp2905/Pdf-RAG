@@ -6,5 +6,4 @@ openai
 langchain-core
 pysqlite3-binary
 crewai-tools
-fastapi
-uvicorn
+python-dotenv
