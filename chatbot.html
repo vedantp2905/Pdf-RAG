@@ -1,0 +1,24 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Embedded Streamlit App</title>
+</head>
+<body>
+  <iframe
+    id="streamlit-iframe"
+    src="https://weekendairag.streamlit.app/?embed=true"
+    style="height: 450px; width: 100%; border: none;"
+    scrolling="no"
+    onload="scrollToBottom()"
+  ></iframe>
+
+  <script>
+    function scrollToBottom() {
+      var iframe = document.getElementById('streamlit-iframe');
+      iframe.contentWindow.scrollTo(0, iframe.contentDocument.body.scrollHeight);
+    }
+  </script>
+</body>
+</html>
