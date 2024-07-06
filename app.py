@@ -1,5 +1,6 @@
 import os
 import asyncio
+from dotenv import load_dotenv
 import streamlit as st
 from io import BytesIO
 from docx import Document
@@ -97,58 +98,61 @@ def configure_tool(mod):
         
     return rag_tool
 
-mod = None
-with st.sidebar:
-    with st.form('Gemini/OpenAI'):
-        model = st.radio('Choose Your LLM', ['Gemini','OpenAI'])
-        submitted = st.form_submit_button("Submit")
-
-if submitted:
+def main():
     
-    load_dotenv('Secret.env')
+    mod = None
+    
+    if 'generated_content' not in st.session_state:
+        st.session_state.generated_content = ''
+    
+    with st.sidebar:
+        with st.form('Gemini/OpenAI/Groq'):
+            model = st.radio('Choose Your LLM', ('Gemini', 'OpenAI'))
+            api_key = st.text_input(f'Enter your API key', type="password")
+            submitted = st.form_submit_button("Submit")
 
-    if model == 'OpenAI':
-        async def setup_OpenAI():
-            loop = asyncio.get_event_loop()
-            if loop is None:
-                loop = asyncio.new_event_loop()
-                asyncio.set_event_loop(loop)
+    if api_key :
+        if model == 'OpenAI':
+            async def setup_OpenAI():
+                loop = asyncio.get_event_loop()
+                if loop is None:
+                    loop = asyncio.new_event_loop()
+                    asyncio.set_event_loop(loop)
 
-            os.environ["OPENAI_API_KEY"] = secrets.OPENAI_API_KEY
-             
-            llm = ChatOpenAI(model='gpt-4-turbo', temperature=0.6, max_tokens=1000, api_key=secrets.OPENAI_API_KEY)
-            print("OpenAI Configured")
-            return llm
+                os.environ["OPENAI_API_KEY"] = api_key
+                llm = ChatOpenAI(model='gpt-4-turbo',temperature=0.6, max_tokens=2000,api_key=api_key)
+                print("OpenAI Configured")
+                return llm
 
-        llm = asyncio.run(setup_OpenAI())
-        mod = 'OpenAI'
+            llm = asyncio.run(setup_OpenAI())
+            mod = 'Gemini'
 
-    elif model == 'Gemini':
-        async def setup_gemini():
-            loop = asyncio.get_event_loop()
-            if loop is None:
-                loop = asyncio.new_event_loop()
-                asyncio.set_event_loop(loop)
 
-            os.environ["GOOGLE_API_KEY"] = secrets.GOOGLE_API_KEY
+        elif model == 'Gemini':
+            async def setup_gemini():
+                loop = asyncio.get_event_loop()
+                if loop is None:
+                    loop = asyncio.new_event_loop()
+                    asyncio.set_event_loop(loop)
 
-            llm = ChatGoogleGenerativeAI(
-                model="gemini-1.5-flash",
-                verbose=True,
-                temperature=0.6,
-                google_api_key=secrets.GOOGLE_API_KEY
-            )
-            print("Gemini Configured")
-            return llm
+                llm = ChatGoogleGenerativeAI(
+                    model="gemini-1.5-flash",
+                    verbose=True,
+                    temperature=0.6,
+                    google_api_key=api_key
+                )
+                print("Gemini Configured")
+                return llm
 
-        llm = asyncio.run(setup_gemini())
-        mod = 'Gemini'
+            llm = asyncio.run(setup_gemini())
+            mod = 'Gemini'
+            
+        rag_tool = configure_tool(mod)
 
-    rag_tool = configure_tool(mod)
-
-        # Initialize Streamlit app title
+    # Initialize Streamlit app title
     st.title("Chat Bot")
-
+    prompt = st.text_input("What info do you need?")
+    
     # Initialize chat history
     if "messages" not in st.session_state:
         st.session_state.messages = []
@@ -162,7 +166,7 @@ if submitted:
                 st.markdown(f"**Echo Bot**: {message['content']}")
 
     # React to user input
-    if prompt := st.text_input("What info do you need?"):
+    if prompt := prompt:
         # Display user message in chat message container
         st.markdown(f"**User**: {prompt}")
         # Add user message to chat history
@@ -171,8 +175,10 @@ if submitted:
         # Process user input and generate response
         response = generate_text(llm,prompt, rag_tool)
 
-
         # Display assistant response in chat message container
         st.markdown(f"**Assistant**: {response}")
         # Add assistant response to chat history
         st.session_state.messages.append({"role": "assistant", "content": response})
+        
+if __name__ == "__main__":
+    main()         
