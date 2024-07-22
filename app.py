@@ -1,10 +1,8 @@
 import os
 import asyncio
-from dotenv import load_dotenv
 import requests
 import streamlit as st
 from io import BytesIO
-from docx import Document
 from langchain_openai import ChatOpenAI
 from langchain_google_genai import ChatGoogleGenerativeAI
 from crewai import Agent, Task, Crew
