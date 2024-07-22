@@ -2,7 +2,7 @@ streamlit==1.36.0
 python-docx
 crewai==0.30.11
 langchain-google-genai==1.0.4
-openai
+openai==1.31.0
 langchain-core==0.1.52
 pysqlite3-binary
 crewai-tools==0.2.6
