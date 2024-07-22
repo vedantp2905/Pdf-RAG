@@ -45,6 +45,53 @@ def verify_gpt_api_key(api_key):
     else:
         print(f"Unexpected status code: {response.status_code}")
         return False
+    
+# Function to configure RAG tool based on selected model
+def configure_tool(mod):
+    if mod == 'Gemini':
+        rag_tool = DirectorySearchTool(
+            directory="Saved Files",
+            config=dict(
+                llm=dict(
+                    provider="google",
+                    config=dict(
+                        model="gemini-1.5-flash",
+                        temperature=0.6
+                    ),
+                ),
+                embedder=dict(
+                    provider="google",
+                    config=dict(
+                        model="models/embedding-001",
+                        task_type="retrieval_document",
+                        title="Embeddings"
+                    ),
+                ),
+            )
+        )
+    else:
+        rag_tool = DirectorySearchTool(
+            directory="Saved Files",
+            config=dict(
+                llm=dict(
+                    provider="openai",
+                    config=dict(
+                        model="gpt-4o",
+                        temperature=0.6
+                    ),
+                ),
+                embedder=dict(
+                    provider="google",
+                    config=dict(
+                        model="models/embedding-001",
+                        task_type="retrieval_document",
+                        title="Embeddings"
+                    ),
+                ),
+            )
+        )
+        
+    return rag_tool
 
 # Function to handle RAG content generation
 def generate_text(llm, question, rag_tool):
@@ -61,8 +108,9 @@ def generate_text(llm, question, rag_tool):
         ''',
         verbose=True,
         allow_delegation=False,
-        llm=llm
-    )
+        llm=llm,
+        max_iter = 5
+        )
 
     task_writer = Task(
         description=f'''Use the PDF RAG search tool to accurately and efficiently answer customer question. 
@@ -80,28 +128,11 @@ def generate_text(llm, question, rag_tool):
     crew = Crew(
         agents=[writer_agent],
         tasks=[task_writer],
-        verbose=2,
-        context={"Customer Question is ": question}
-    )
+        verbose=2
+        )
 
     result = crew.kickoff(inputs=inputs)
     return result
-
-# Function to configure RAG tool based on selected model
-def configure_tool():
-    rag_tool = DirectorySearchTool(
-        directory="Saved Files",
-        config=dict(
-            llm=dict(
-                provider="openai",
-                config=dict(
-                    model="gpt-4o",
-                    temperature=0.6
-                ),
-            )
-        )
-    )
-    return rag_tool
 
 def main():
     
@@ -112,31 +143,61 @@ def main():
     
     with st.sidebar:
         with st.form('OpenAI'):
-            api_key = st.text_input(f'Enter your OpenAI API key', type="password")
+            model = st.radio('Choose Your LLM', ('Gemini', 'OpenAI'))
+            api_key = st.text_input(f'Enter your API key', type="password")
             submitted = st.form_submit_button("Submit")
 
         if api_key:
+            if model=='OpenAI':
                 validity_model = verify_gpt_api_key(api_key)
                 if validity_model ==True:
-                    st.write(f"Valid OpenAI API key")
+                    st.write(f"Valid {model} API key")
                 else:
-                    st.write(f"Invalid OpenAI API key")        
+                    st.write(f"Invalid {model} API key")   
+            elif model=='Gemini':
+                validity_model = verify_gemini_api_key(api_key)
+                if validity_model ==True:
+                    st.write(f"Valid {model} API key")
+                else:
+                    st.write(f"Invalid {model} API key")   
         
-    if validity_model:    
-        async def setup_OpenAI():
-            loop = asyncio.get_event_loop()
-            if loop is None:
-                loop = asyncio.new_event_loop()
-                asyncio.set_event_loop(loop)
+    if validity_model:  
+        if model == 'OpenAI':
+            async def setup_OpenAI():
+                loop = asyncio.get_event_loop()
+                if loop is None:
+                    loop = asyncio.new_event_loop()
+                    asyncio.set_event_loop(loop)
 
-            os.environ["OPENAI_API_KEY"] = api_key
-            llm = ChatOpenAI(model='gpt-4-turbo',temperature=0.6, max_tokens=2000,api_key=api_key)
-            print("OpenAI Configured")
-            return llm
+                os.environ["OPENAI_API_KEY"] = api_key
+                llm = ChatOpenAI(model='gpt-4-turbo',temperature=0.6, max_tokens=2000,api_key=api_key)
+                print("OpenAI Configured")
+                return llm
 
-        llm = asyncio.run(setup_OpenAI())
+            llm = asyncio.run(setup_OpenAI())
+
+        elif model == 'Gemini':
+            async def setup_gemini():
+                loop = asyncio.get_event_loop()
+                if loop is None:
+                    loop = asyncio.new_event_loop()
+                    asyncio.set_event_loop(loop)
+                
+                os.environ["GOOGLE_API_KEY"] = api_key
+                 
+                llm = ChatGoogleGenerativeAI(
+                    model="gemini-1.5-flash",
+                    verbose=True,
+                    temperature=0.6,
+                    google_api_key=api_key
+                )
+                print("Gemini Configured")
+                return llm
             
-        rag_tool = configure_tool()
+            llm = asyncio.run(setup_gemini())
+
+            
+        rag_tool = configure_tool(model)
 
         # Initialize Streamlit app title
         st.title("Chat Bot")
