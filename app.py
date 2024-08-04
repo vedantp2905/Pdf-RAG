@@ -44,61 +44,37 @@ def verify_gpt_api_key(api_key):
         print(f"Unexpected status code: {response.status_code}")
         return False
     
-# Function to configure RAG tool based on selected model
 def configure_tool(mod):
-    if mod == 'Gemini':
-        rag_tool = DirectorySearchTool(
-            directory="Saved Files",
-            config=dict(
-                llm=dict(
-                    provider="google",
-                    config=dict(
-                        model="gemini-1.5-flash",
-                        temperature=0.6
-                    ),
-                ),
-                embedder=dict(
-                    provider="google",
-                    config=dict(
-                        model="models/embedding-001",
-                        task_type="retrieval_document",
-                        title="Embeddings"
-                    ),
-                ),
-            )
-        )
-    else:
-        rag_tool = DirectorySearchTool(
-            directory="Saved Files",
-            config=dict(
-                llm=dict(
-                    provider="openai",
-                    config=dict(
-                        model="gpt-4o",
-                        temperature=0.6
-                    ),
-                ),
-                embedder=dict(
-                    provider="google",
-                    config=dict(
-                        model="models/embedding-001",
-                        task_type="retrieval_document",
-                        title="Embeddings"
-                    ),
-                ),
-            )
-        )
-        
-    return rag_tool
+    config = {
+        'directory': "Saved Files",
+        'config': {
+            'llm': {
+                'provider': "google" if mod == 'Gemini' else "openai",
+                'config': {
+                    'model': "gemini-1.5-flash" if mod == 'Gemini' else "gpt-4o",
+                    'temperature': 0.6
+                },
+            },
+            'embedder': {
+                'provider': "google",
+                'config': {
+                    'model': "models/embedding-001",
+                    'task_type': "retrieval_document",
+                    'title': "Embeddings"
+                },
+            },
+        }
+    }
+    
+    return DirectorySearchTool(**config)
 
-# Function to handle RAG content generation
-def generate_text(llm, question, rag_tool):
-    inputs = {'question': question}
+def generate_text(llm, question, rag_tool, customer_name):
+    inputs = {'question': question, 'customer_name': customer_name}
 
     writer_agent = Agent(
         role='Customer Service Specialist',
         goal='To accurately and efficiently answer customer questions',
-        backstory='''
+        backstory=f'''
         As a seasoned Customer Service Specialist, this bot has honed its 
         skills in delivering prompt and precise solutions to customer queries.
         With a background in handling diverse customer needs across various industries,
@@ -108,36 +84,74 @@ def generate_text(llm, question, rag_tool):
         allow_delegation=False,
         llm=llm,
         max_iter = 5
-        )
+    )
+
+    reviewer_agent = Agent(
+        role='Brand Consistency and Quality Assurance Specialist',
+        goal='To ensure all responses align with brand guidelines and maintain high quality',
+        backstory=f'''
+        With years of experience in brand management and quality assurance,
+        this specialist ensures that all customer communications are consistent
+        with the company's voice, values, and guidelines. They have a keen eye
+        for detail and a deep understanding of the brand's identity. 
+        ''',
+        verbose=True,
+        allow_delegation=False,
+        llm=llm,
+        max_iter = 5
+    )
 
     task_writer = Task(
-        description=f'''Use the PDF RAG search tool to accurately and efficiently answer customer question. 
-                       The customer question is: {question}
-                       The task involves analyzing user queries and generating clear, concise, and accurate responses.''',
+        description=f'''Use the PDF RAG search tool to accurately and efficiently answer the customer question: {question}
+                       The customer's name is {customer_name}. Personalize the response appropriately.
+                       Analyze user queries and generate clear, concise, and accurate responses.
+                       Only obtain information using the RAG tool and no outside sources.''',
         agent=writer_agent,
-        expected_output="""
-        - A detailed and well-sourced answer to the customer's question.
+        expected_output=f"""
+        - A detailed and well-sourced answer to {customer_name}'s question.
         - No extra information. Just the answer to the question.
         - Clear and concise synthesis of the retrieved information, formatted in a user-friendly manner.
+        - Personalized greeting and closing using {customer_name}.
         """,
         tools=[rag_tool]
     )
 
+    task_reviewer = Task(
+        description=f'''Review the answer provided by the Customer Service Specialist for {customer_name}'s question: {question}
+                       Ensure the response aligns with company's brand guidelines, which include:
+                       1. Maintaining a professional yet friendly tone
+                       2. Accuracy of information
+                       3. Conciseness and clarity
+                       4. Proper use of company terminology
+                       5. Adherence to our core values of transparency, innovation, and customer-centricity
+                       6. Appropriate personalization using {customer_name}''',
+        agent=reviewer_agent,
+        expected_output=f"""
+        - A final approved answer to the point
+        """,
+        context=[task_writer]
+    )
+
     crew = Crew(
-        agents=[writer_agent],
-        tasks=[task_writer],
+        agents=[writer_agent, reviewer_agent],
+        tasks=[task_writer, task_reviewer],
         verbose=2
-        )
+    )
 
     result = crew.kickoff(inputs=inputs)
     return result
 
+
 def main():
     
+    st.header('ChatBot')
     validity_model = False
     
     if 'generated_content' not in st.session_state:
         st.session_state.generated_content = ''
+    
+    if 'customer_name' not in st.session_state:
+        st.session_state.customer_name = ''
     
     with st.sidebar:
         with st.form('OpenAI'):
@@ -196,37 +210,47 @@ def main():
 
             
         rag_tool = configure_tool(model)
-
-        # Initialize Streamlit app title
-        st.title("Chat Bot")
-        prompt = st.text_input("What info do you need?")
         
+        st.session_state.customer_name = st.text_input('May I know your name?')
+        
+    if st.session_state.customer_name:
+        # Initialize Streamlit app title
+        st.title(f"Welcome, {st.session_state.customer_name}!")
+        st.write("How can I help you today? I can answer queries on:")
+        st.write("1. Core values, mission, and vision")
+        st.write("2. Services do we offer")
+        st.write("3. Different plans for our services")
+        st.write("4. Pricing and Billing")
+
         # Initialize chat history
         if "messages" not in st.session_state:
             st.session_state.messages = []
 
         # Display chat messages from history on app rerun
         for message in st.session_state.messages:
-            with st.empty():
-                if message["role"] == "user":
-                    st.markdown(f"**User**: {message['content']}")
-                elif message["role"] == "assistant":
-                    st.markdown(f"**Echo Bot**: {message['content']}")
+            with st.chat_message(message["role"]):
+                st.markdown(message["content"])
+
+        # Place the text input for the user's query at the bottom
+        prompt = st.chat_input("Enter your query:")
 
         # React to user input
-        if prompt := prompt:
-            # Display user message in chat message container
-            st.markdown(f"**User**: {prompt}")
+        if prompt:
             # Add user message to chat history
             st.session_state.messages.append({"role": "user", "content": prompt})
 
-            # Process user input and generate response
-            response = generate_text(llm,prompt, rag_tool)
+            # Display user message
+            with st.chat_message("user"):
+                st.markdown(prompt)
 
-            # Display assistant response in chat message container
-            st.markdown(f"**Assistant**: {response}")
+            # Process user input and generate response
+            with st.chat_message("assistant"):
+                response_placeholder = st.empty()
+                response = generate_text(llm, prompt, rag_tool, st.session_state.customer_name)
+                response_placeholder.markdown(response)
+
             # Add assistant response to chat history
             st.session_state.messages.append({"role": "assistant", "content": response})
-        
+
 if __name__ == "__main__":
-    main()         
+    main()
