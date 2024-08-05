@@ -7,6 +7,9 @@ from langchain_openai import ChatOpenAI
 from langchain_google_genai import ChatGoogleGenerativeAI
 from crewai import Agent, Task, Crew
 from crewai_tools import DirectorySearchTool
+import nest_asyncio
+
+nest_asyncio.apply()
 
 def verify_gemini_api_key(api_key):
     API_VERSION = 'v1'
@@ -68,7 +71,7 @@ def configure_tool(mod):
     
     return DirectorySearchTool(**config)
 
-def generate_text(llm, question, rag_tool, customer_name):
+def generate_text(llm, question, rag_tool, customer_name,mode):
     inputs = {'question': question, 'customer_name': customer_name}
 
     writer_agent = Agent(
@@ -131,15 +134,19 @@ def generate_text(llm, question, rag_tool, customer_name):
         """,
         context=[task_writer]
     )
+    
+    if mode == 'Execute':
+                
+        return(task_writer.kickoff(inputs=inputs))
+    
+    else:
+        crew = Crew(
+            agents=[writer_agent,reviewer_agent] ,
+            tasks=[task_writer,task_reviewer],
+            verbose=2)
+        
+        return(crew.kickoff(inputs=inputs))
 
-    crew = Crew(
-        agents=[writer_agent, reviewer_agent],
-        tasks=[task_writer, task_reviewer],
-        verbose=2
-    )
-
-    result = crew.kickoff(inputs=inputs)
-    return result
 
 
 def main():
@@ -157,6 +164,7 @@ def main():
         with st.form('OpenAI'):
             model = st.radio('Choose Your LLM', ('Gemini', 'OpenAI'))
             api_key = st.text_input(f'Enter your API key', type="password")
+            mode = st.radio('Choose Your Mode', ('Execute', 'Debug'))
             submitted = st.form_submit_button("Submit")
 
         if api_key:
@@ -246,7 +254,7 @@ def main():
             # Process user input and generate response
             with st.chat_message("assistant"):
                 response_placeholder = st.empty()
-                response = generate_text(llm, prompt, rag_tool, st.session_state.customer_name)
+                response = generate_text(llm, prompt, rag_tool, st.session_state.customer_name,mode)
                 response_placeholder.markdown(response)
 
             # Add assistant response to chat history
